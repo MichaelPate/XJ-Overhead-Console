@@ -53,6 +53,7 @@ void MX_RTC_Init(void)
   }
   /* USER CODE BEGIN RTC_Init 2 */
 
+
   /* USER CODE END RTC_Init 2 */
 
 }

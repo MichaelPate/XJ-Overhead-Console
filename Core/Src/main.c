@@ -24,6 +24,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
+#include <stdio.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -59,6 +60,13 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// Overload fputc so we can use "printf" in the rest of the code to print through UART
+int fputc(int ch, FILE *f)
+{
+	HAL_UART_Transmit(&huart2, (unsigned char *)&ch, 1, 100);
+	return ch;
+}
 
 /* USER CODE END 0 */
 
@@ -98,15 +106,64 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+
   /* USER CODE BEGIN 2 */
+  // Here we need to use huart2 to set the RTC to the correct time
+
+  // Enable backup domain access (according to documentation UM1725 57.2.3)
+  __HAL_RCC_PWR_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
+  __HAL_RCC_RTC_ENABLE();
+
+  // Setting RTC is done following the procedure in UM1725 section 57.2.4
+  // For our example time lets do
+  // 12:34:56 PM, June 29, 2024
+  RTC_TimeTypeDef demoStartTime;
+  demoStartTime.Hours = 12;
+  demoStartTime.Minutes = 34;
+  demoStartTime.Seconds = 56;
+  demoStartTime.TimeFormat = RTC_HOURFORMAT12_PM;
+  demoStartTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  demoStartTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &demoStartTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+  RTC_DateTypeDef demoStartDate;
+  demoStartDate.Month = RTC_MONTH_JUNE;
+  demoStartDate.Date = 29;
+  demoStartDate.Year = 24;
+  if (HAL_RTC_SetDate(&hrtc, &demoStartDate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+  // Update the backup register too
+  // from https://controllerstech.com/internal-rtc-in-stm32/
+  // The hex number was chosen randomly
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int bufSize = 100;
+  char timeString[bufSize];
+  char dateString[bufSize];
   while (1)
   {
-    /* USER CODE END WHILE */
+	  // The goal is to transmit the now set time from the RTC, once a second.
+	  RTC_DateTypeDef getDate;
+	  RTC_TimeTypeDef getTime;
+	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &getDate, RTC_FORMAT_BIN);
+	  sprintf(timeString, "%02d:%02d:%02d", getTime.Hours, getTime.Minutes, getTime.Seconds);
+	  printf(timeString);
+	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
+	  printf(dateString);
+	  HAL_Delay(1000);
+
+	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
