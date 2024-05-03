@@ -160,8 +160,10 @@ int main(void)
 	  HAL_RTC_GetDate(&hrtc, &getDate, RTC_FORMAT_BIN);
 	  sprintf(timeString, "%02d:%02d:%02d", getTime.Hours, getTime.Minutes, getTime.Seconds);
 	  printf(timeString);
+	  printf(" ");
 	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
 	  printf(dateString);
+	  printf("\n\r");
 	  HAL_Delay(1000);
 
 	  /* USER CODE END WHILE */
