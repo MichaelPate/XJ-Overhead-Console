@@ -62,6 +62,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 // Overload fputc so we can use "printf" in the rest of the code to print through UART
+// from https://github.com/dekuNukem/STM32_tutorials/blob/master/lesson1_serial_helloworld/README.md
 int fputc(int ch, FILE *f)
 {
 	HAL_UART_Transmit(&huart2, (unsigned char *)&ch, 1, 100);
