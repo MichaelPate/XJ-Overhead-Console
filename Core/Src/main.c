@@ -50,6 +50,7 @@
 
 /* USER CODE BEGIN PV */
 
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,8 +114,23 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
-
   /* USER CODE BEGIN 2 */
+
+
+  int buffer[100];
+
+  while (1)
+  {
+	  if (HAL_UART_Receive(&huart2, buffer, 1, 10) == HAL_OK)
+	  {
+		  printf("\r\n\n");
+		  HAL_UART_Transmit(&huart2, buffer, 1, 10);
+	  }
+  }
+
+
+
+
   // Here we need to use huart2 to set the RTC to the correct time
 
   // Enable backup domain access (according to documentation UM1725 57.2.3)
@@ -122,6 +138,7 @@ int main(void)
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
+
 
   // Setting RTC is done following the procedure in UM1725 section 57.2.4
   // For our example time lets do
@@ -172,7 +189,7 @@ int main(void)
 	  printf("\r\n");
 	  HAL_Delay(1000);
 
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
