@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
@@ -49,7 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#define RXBUFSIZE 20
+uint8_t UART2_rxBuffer[RXBUFSIZE] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,7 +76,7 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int isDone = 0;
 /* USER CODE END 0 */
 
 /**
@@ -106,6 +108,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
@@ -113,9 +116,41 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
-
   /* USER CODE BEGIN 2 */
-  // Here we need to use huart2 to set the RTC to the correct time
+
+  // Here is we will test RX through DMA and just cut off the rest of the code for now
+
+  printf("Put something in the terminal.\r\n");
+
+  //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
+
+
+  //when we want data received,
+  // just define a buffer in the size of data we want to receive
+  // then call a dma receive for that number of bytes
+  // and wait for the finished flag to be set
+  // the finish flag gets set inside the tx complete callback
+
+
+
+  // This strategy is good for getting data for changing settings for example
+  printf("give me 4 bytes of data.\r\n");
+  uint8_t buf[4] = {0};
+  HAL_UART_Receive_DMA(&huart2, buf, 4);
+  while (isDone == 0);
+  isDone = 0;
+  // we should now have the 4 bytes in buf
+
+  // If we were to use DMA for like the GPS,
+  // we would set up that DMA to be cyclic, and make the buffer just as big
+  // as the packets that come from the GPS
+  // so that we can just grab the data from the buffer whenever we want to use it
+  // so that our program loop isnt getting interrupted by the GPS sending new data.
+  // whereas for getting user input (like above) we could just use blocking statements
+
+  while (1)
+  {
+  }
 
   // Enable backup domain access (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -172,7 +207,7 @@ int main(void)
 	  printf("\r\n");
 	  HAL_Delay(1000);
 
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -227,6 +262,25 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief UART 2 DMA RX complete callback
+  * @retval None
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	printf("Got data finished\r\n");
+	isDone = 1;
+	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
+	//printf("Im calling back.\r\n");
+	// this is where the incoming data could be moved instead of just echoing
+	// TODO: an experiment would be to, in main(), print out the contents of rxbuffer every second, remove this transmit, and see what happens to that buffer as data is added.
+    //HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
+
+    // This was commented out because we are currently using a circular DMA buffer
+    // which runs continuously, so there is no need to restart the DMA RX process after one is completed
+    //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
+}
 
 /* USER CODE END 4 */
 
