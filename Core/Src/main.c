@@ -49,7 +49,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t rxBuffer[10];
 
 /* USER CODE END PV */
 
@@ -119,14 +119,12 @@ int main(void)
 
   int buffer[100];
 
-  while (1)
-  {
-	  if (HAL_UART_Receive(&huart2, buffer, 1, 10) == HAL_OK)
-	  {
-		  printf("\r\n\n");
-		  HAL_UART_Transmit(&huart2, buffer, 1, 10);
-	  }
-  }
+  //while (1)
+  //{
+	  HAL_UART_Receive_IT(&huart2, &rxBuffer, 1);
+	  printf(rxBuffer);
+	  while(1);
+  //}
 
 
 
