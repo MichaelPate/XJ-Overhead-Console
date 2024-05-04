@@ -131,6 +131,9 @@ int main(void)
   // and wait for the finished flag to be set
   // the finish flag gets set inside the tx complete callback
 
+
+
+  // This strategy is good for getting data for changing settings for example
   printf("give me 4 bytes of data.\r\n");
   uint8_t buf[4] = {0};
   HAL_UART_Receive_DMA(&huart2, buf, 4);
@@ -138,6 +141,12 @@ int main(void)
   isDone = 0;
   // we should now have the 4 bytes in buf
 
+  // If we were to use DMA for like the GPS,
+  // we would set up that DMA to be cyclic, and make the buffer just as big
+  // as the packets that come from the GPS
+  // so that we can just grab the data from the buffer whenever we want to use it
+  // so that our program loop isnt getting interrupted by the GPS sending new data.
+  // whereas for getting user input (like above) we could just use blocking statements
 
   while (1)
   {
