@@ -120,6 +120,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   // Here is we will test RX through DMA and just cut off the rest of the code for now
+
   printf("Put something in the terminal.\r\n");
 
   HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
