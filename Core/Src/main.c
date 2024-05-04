@@ -27,6 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -55,6 +56,19 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+// This will redirect printf() to our UART instance, huart2 in this case
+// This, along with #include <stdio.h> up top, allows us to easily print to UART
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -98,15 +112,66 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+
   /* USER CODE BEGIN 2 */
+  // Here we need to use huart2 to set the RTC to the correct time
+
+  // Enable backup domain access (according to documentation UM1725 57.2.3)
+  __HAL_RCC_PWR_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
+  __HAL_RCC_RTC_ENABLE();
+
+  // Setting RTC is done following the procedure in UM1725 section 57.2.4
+  // For our example time lets do
+  // 12:34:56 PM, June 29, 2024
+  RTC_TimeTypeDef demoStartTime;
+  demoStartTime.Hours = 12;
+  demoStartTime.Minutes = 34;
+  demoStartTime.Seconds = 56;
+  demoStartTime.TimeFormat = RTC_HOURFORMAT12_PM;
+  demoStartTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  demoStartTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &demoStartTime, RTC_FORMAT_BIN) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+  RTC_DateTypeDef demoStartDate;
+  demoStartDate.Month = RTC_MONTH_JUNE;
+  demoStartDate.Date = 29;
+  demoStartDate.Year = 24;
+  if (HAL_RTC_SetDate(&hrtc, &demoStartDate, RTC_FORMAT_BIN) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+  // Update the backup register too
+  // from https://controllerstech.com/internal-rtc-in-stm32/
+  // The hex number was chosen randomly
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int bufSize = 100;
+  char timeString[bufSize];
+  char dateString[bufSize];
   while (1)
   {
-    /* USER CODE END WHILE */
+	  // The goal is to transmit the now set time from the RTC, once a second.
+	  RTC_DateTypeDef getDate;
+	  RTC_TimeTypeDef getTime;
+	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &getDate, RTC_FORMAT_BIN);
+	  sprintf(timeString, "%02d:%02d:%02d", getTime.Hours, getTime.Minutes, getTime.Seconds);
+	  printf(timeString);
+	  printf(" ");
+	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
+	  printf(dateString);
+	  printf("\r\n");
+	  HAL_Delay(1000);
+
+	  /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -175,6 +240,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  printf("Error encountered.");
+	  while (1);
   }
   /* USER CODE END Error_Handler_Debug */
 }
