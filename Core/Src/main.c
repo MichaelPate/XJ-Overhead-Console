@@ -52,6 +52,7 @@
 /* USER CODE BEGIN PV */
 #define RXBUFSIZE 12
 uint8_t UART2_rxBuffer[RXBUFSIZE] = {0};
+uint8_t UART2_txBuffer[RXBUFSIZE] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -242,8 +243,14 @@ void SystemClock_Config(void)
   */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
 	//printf("Im calling back.\r\n");
+	// this is where the incoming data could be moved instead of just echoing
+	// TODO: an experiment would be to, in main(), print out the contents of rxbuffer every second, remove this transmit, and see what happens to that buffer as data is added.
     HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
+
+    // This was commented out because we are currently using a circular DMA buffer
+    // which runs continuously, so there is no need to restart the DMA RX process after one is completed
     //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
 }
 
