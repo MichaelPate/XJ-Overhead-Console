@@ -29,6 +29,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdlib.h>
 
 /* USER CODE END Includes */
 
@@ -76,7 +77,7 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int isDone = 0;
+int g_UART2RXCmplt = 0;
 /* USER CODE END 0 */
 
 /**
@@ -120,7 +121,8 @@ int main(void)
 
   // Here is we will test RX through DMA and just cut off the rest of the code for now
 
-  printf("Put something in the terminal.\r\n");
+  //printf("Put something in the terminal.\r\n");
+  printf("Send only newlines, not carriage returns.");
 
   //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
 
@@ -134,11 +136,12 @@ int main(void)
 
 
   // This strategy is good for getting data for changing settings for example
-  printf("give me 4 bytes of data.\r\n");
-  uint8_t buf[4] = {0};
-  HAL_UART_Receive_DMA(&huart2, buf, 4);
-  while (isDone == 0);
-  isDone = 0;
+  //printf("give me 4 bytes of data.\r\n");
+  //HAL_UART_Receive_DMA(&huart2, buf, 4);
+  //HAL_UART_Receive(&huart2, buf, 4, HAL_MAX_DELAY);
+  //int number = atoi(buf);
+  //while (g_UART2RXCmplt == 0);
+  //g_UART2RXCmplt = 0;
   // we should now have the 4 bytes in buf
 
   // If we were to use DMA for like the GPS,
@@ -148,10 +151,6 @@ int main(void)
   // so that our program loop isnt getting interrupted by the GPS sending new data.
   // whereas for getting user input (like above) we could just use blocking statements
 
-  while (1)
-  {
-  }
-
   // Enable backup domain access (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
   HAL_PWR_EnableBkUpAccess();
@@ -159,8 +158,91 @@ int main(void)
   __HAL_RCC_RTC_ENABLE();
 
   // Setting RTC is done following the procedure in UM1725 section 57.2.4
+
+
+  // get and display the current time
+  char timeString[8];
+  char dateString[8];
+  uint8_t uartBuffer[10] = {0};
+  RTC_DateTypeDef dateRTC;
+  RTC_TimeTypeDef timeRTC;
+  printf("Current date and time: ");
+  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
+  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
+  printf(timeString);
+  printf(" ");
+  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
+  printf(dateString);
+  printf("\r\nSet the time? (y/n)\r\n");
+  //HAL_Delay(250);
+  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
+
+  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y')
+  {
+	  // ask the user to set the time and date
+
+	  printf("Enter the time in 24hr format (HH:MM)\r\n");
+	  HAL_UART_Receive(&huart2, uartBuffer, 6, HAL_MAX_DELAY);
+	  char charHrs[2] = {uartBuffer[0], uartBuffer[1]};
+	  char charMins[2] = {uartBuffer[3], uartBuffer[4]};
+	  timeRTC.Hours = atoi(charHrs);
+	  timeRTC.Minutes = atoi(charMins);
+	  uint8_t dst = 0;
+	  printf("Daylight savings time? (y/n)\r\n");
+	  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
+	  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y') dst = RTC_DAYLIGHTSAVING_ADD1H;
+	  else dst = RTC_DAYLIGHTSAVING_NONE;
+	  timeRTC.Seconds = 0;
+	  timeRTC.TimeFormat = RTC_HOURFORMAT12_PM;
+	  timeRTC.DayLightSaving = dst;
+	  timeRTC.StoreOperation = RTC_STOREOPERATION_RESET;
+	  if (HAL_RTC_SetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN) != HAL_OK)
+	  {
+		printf("INVALID TIME.\r\n");
+		Error_Handler();
+	  }
+
+	  printf("Enter the date (MM-DD-YY)\r\n");
+	  HAL_UART_Receive(&huart2, uartBuffer, 8, HAL_MAX_DELAY);
+	  char charMM[2] = {uartBuffer[0], uartBuffer[1]};
+	  char charDD[2] = {uartBuffer[3], uartBuffer[4]};
+	  char charYY[2] = {uartBuffer[6], uartBuffer[7]};
+	  dateRTC.Month = atoi(charMM);
+	  dateRTC.Date = atoi(charDD);
+	  dateRTC.Year = atoi(charYY);
+	  if (HAL_RTC_SetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN) != HAL_OK)
+	  {
+		  printf("INVALID DATE.\r\n");
+		  Error_Handler();
+	  }
+
+	  // Update the backup register too
+	  // from https://controllerstech.com/internal-rtc-in-stm32/
+	  // The hex number was chosen randomly
+	  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
+
+	  printf("Current date and time: ");
+	  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+	  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
+	  printf(timeString);
+	  printf(" ");
+	  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
+	  printf(dateString);
+	  printf("\r\n");
+  }
+  else
+  {
+	  // else do nothing
+	  printf("Skipping time set.\r\n");
+  }
+
+
+
   // For our example time lets do
   // 12:34:56 PM, June 29, 2024
+  /*
   RTC_TimeTypeDef demoStartTime;
   demoStartTime.Hours = 12;
   demoStartTime.Minutes = 34;
@@ -172,6 +254,7 @@ int main(void)
   {
 	  Error_Handler();
   }
+
   RTC_DateTypeDef demoStartDate;
   demoStartDate.Month = RTC_MONTH_JUNE;
   demoStartDate.Date = 29;
@@ -180,18 +263,16 @@ int main(void)
   {
 	  Error_Handler();
   }
-  // Update the backup register too
-  // from https://controllerstech.com/internal-rtc-in-stm32/
-  // The hex number was chosen randomly
-  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
+
+   *
+   */
+
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int bufSize = 100;
-  char timeString[bufSize];
-  char dateString[bufSize];
+
   while (1)
   {
 	  // The goal is to transmit the now set time from the RTC, once a second.
@@ -270,7 +351,7 @@ void SystemClock_Config(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	printf("Got data finished\r\n");
-	isDone = 1;
+	g_UART2RXCmplt = 1;
 	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
 	//printf("Im calling back.\r\n");
 	// this is where the incoming data could be moved instead of just echoing
