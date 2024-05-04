@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
@@ -49,7 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#define RXBUFSIZE 12
+uint8_t UART2_rxBuffer[RXBUFSIZE] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -106,6 +108,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
@@ -113,9 +116,14 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
-
   /* USER CODE BEGIN 2 */
-  // Here we need to use huart2 to set the RTC to the correct time
+
+  // Here is we will test RX through DMA and just cut off the rest of the code for now
+  printf("Put something in the terminal.\r\n");
+
+  HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
+
+  while (1);
 
   // Enable backup domain access (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -172,7 +180,7 @@ int main(void)
 	  printf("\r\n");
 	  HAL_Delay(1000);
 
-	  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -227,6 +235,17 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief UART 2 DMA RX complete callback
+  * @retval None
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	//printf("Im calling back.\r\n");
+    HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
+    //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
+}
 
 /* USER CODE END 4 */
 
