@@ -76,7 +76,7 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int isDone = 0;
 /* USER CODE END 0 */
 
 /**
@@ -122,7 +122,7 @@ int main(void)
 
   printf("Put something in the terminal.\r\n");
 
-  HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
+  //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
 
 
   //when we want data received,
@@ -131,11 +131,16 @@ int main(void)
   // and wait for the finished flag to be set
   // the finish flag gets set inside the tx complete callback
 
+  printf("give me 4 bytes of data.\r\n");
+  uint8_t buf[4] = {0};
+  HAL_UART_Receive_DMA(&huart2, buf, 4);
+  while (isDone == 0);
+  isDone = 0;
+  // we should now have the 4 bytes in buf
+
 
   while (1)
   {
-	  printf(UART2_rxBuffer[5]);
-	  HAL_Delay(1000);
   }
 
   // Enable backup domain access (according to documentation UM1725 57.2.3)
@@ -255,6 +260,8 @@ void SystemClock_Config(void)
   */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	printf("Got data finished\r\n");
+	isDone = 1;
 	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
 	//printf("Im calling back.\r\n");
 	// this is where the incoming data could be moved instead of just echoing
