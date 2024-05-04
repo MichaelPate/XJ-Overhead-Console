@@ -50,9 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define RXBUFSIZE 12
+#define RXBUFSIZE 20
 uint8_t UART2_rxBuffer[RXBUFSIZE] = {0};
-uint8_t UART2_txBuffer[RXBUFSIZE] = {0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,7 +124,19 @@ int main(void)
 
   HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
 
-  while (1);
+
+  //when we want data received,
+  // just define a buffer in the size of data we want to receive
+  // then call a dma receive for that number of bytes
+  // and wait for the finished flag to be set
+  // the finish flag gets set inside the tx complete callback
+
+
+  while (1)
+  {
+	  printf(UART2_rxBuffer[5]);
+	  HAL_Delay(1000);
+  }
 
   // Enable backup domain access (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
@@ -248,7 +259,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	//printf("Im calling back.\r\n");
 	// this is where the incoming data could be moved instead of just echoing
 	// TODO: an experiment would be to, in main(), print out the contents of rxbuffer every second, remove this transmit, and see what happens to that buffer as data is added.
-    HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
+    //HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
 
     // This was commented out because we are currently using a circular DMA buffer
     // which runs continuously, so there is no need to restart the DMA RX process after one is completed
