@@ -41,8 +41,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern UART_HandleTypeDef huart2;
-extern uint8_t rxBuffer[10];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -205,15 +204,11 @@ void SysTick_Handler(void)
 void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
-	if(__HAL_UART_GET_FLAG(&huart2, UART_FLAG_RXNE)){  // check UART2 Rx Not Empty flag
-	        HAL_UART_Transmit_IT(&huart2, &rxBuffer, 1);   // ransmit the received data back
-	    }
+
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-  HAL_UART_Receive_IT(&huart2, &rxBuffer, 1);  // restart listening for data
 
-  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);  // toggle User LED
   /* USER CODE END USART2_IRQn 1 */
 }
 
