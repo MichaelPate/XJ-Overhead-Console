@@ -56,18 +56,23 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+// This will redirect printf() to our UART instance, huart2 in this case
+// This, along with #include <stdio.h> up top, allows us to easily print to UART
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  return ch;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-// Overload fputc so we can use "printf" in the rest of the code to print through UART
-// from https://github.com/dekuNukem/STM32_tutorials/blob/master/lesson1_serial_helloworld/README.md
-int fputc(int ch, FILE *f)
-{
-	HAL_UART_Transmit(&huart2, (unsigned char *)&ch, 1, 100);
-	return ch;
-}
 
 /* USER CODE END 0 */
 
@@ -127,7 +132,7 @@ int main(void)
   demoStartTime.TimeFormat = RTC_HOURFORMAT12_PM;
   demoStartTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   demoStartTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &demoStartTime, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetTime(&hrtc, &demoStartTime, RTC_FORMAT_BIN) != HAL_OK)
   {
 	  Error_Handler();
   }
@@ -135,7 +140,7 @@ int main(void)
   demoStartDate.Month = RTC_MONTH_JUNE;
   demoStartDate.Date = 29;
   demoStartDate.Year = 24;
-  if (HAL_RTC_SetDate(&hrtc, &demoStartDate, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetDate(&hrtc, &demoStartDate, RTC_FORMAT_BIN) != HAL_OK)
   {
 	  Error_Handler();
   }
@@ -163,7 +168,7 @@ int main(void)
 	  printf(" ");
 	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
 	  printf(dateString);
-	  printf("\n\r");
+	  printf("\r\n");
 	  HAL_Delay(1000);
 
 	  /* USER CODE END WHILE */
@@ -235,6 +240,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  printf("Error encountered.");
+	  while (1);
   }
   /* USER CODE END Error_Handler_Debug */
 }
