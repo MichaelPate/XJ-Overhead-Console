@@ -58,6 +58,7 @@ void SystemClock_Config(void);
 
 // This will redirect printf() to our UART instance, huart2 in this case
 // This, along with #include <stdio.h> up top, allows us to easily print to UART
+// from https://forum.digikey.com/t/easily-use-printf-on-stm32/20157
 #ifdef __GNUC__
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
