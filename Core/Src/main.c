@@ -119,7 +119,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* When to use blocking or nonblocking UART RX
+  /* A note on when to use blocking or nonblocking UART RX
   //when we want data received,
   // just define a buffer in the size of data we want to receive
   // then call a dma receive for that number of bytes
@@ -165,6 +165,10 @@ int main(void)
 	  }
   }
   printf("Done.\r\n");
+
+
+  /* Display a splash screen on the LCD */
+
 
   /* Get and set the RTC module */
   // Setting RTC is done following the procedure in UM1725 section 57.2
