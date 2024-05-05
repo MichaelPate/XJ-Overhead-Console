@@ -118,7 +118,6 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
-
   /* USER CODE BEGIN 2 */
   /* When to use blocking or nonblocking UART RX
   //when we want data received,
@@ -147,6 +146,25 @@ int main(void)
   // from the serial terminal, so give a warning to anyone trying to communicate
   printf("Send only newlines, not also carriage returns.\r\n");
 
+  /* Add I2C and scan the bus for all addresses that respond */
+  // TODO: Replace generic i2c scanner with a scanner that specifically looks for our modules only
+  // 20x4 LCD: 0x27, TODO: get addresses for other modules
+  printf("Scanning I2C bus.\r\n");
+  int ret = 0;
+  char i2cBuffer[5] = {0};
+  // Scan all 128 available i2c addresses
+  for (uint8_t testAddr = 1; testAddr < 128; testAddr++)
+  {
+	  ret = HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(testAddr<<1), 3, 5);
+	  if (ret == HAL_OK) // If an ACK was received at address testAddr
+	  {
+		  sprintf(i2cBuffer, "0x%X", testAddr);
+		  printf("Device at: ");
+		  printf(i2cBuffer);
+		  printf("\r\n");
+	  }
+  }
+  printf("Done.\r\n");
 
   /* Get and set the RTC module */
   // Setting RTC is done following the procedure in UM1725 section 57.2
