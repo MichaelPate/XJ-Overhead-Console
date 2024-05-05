@@ -63,7 +63,8 @@ void MX_TIM1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM1_Init 2 */
-
+  // This timer is used for making microsecond delays
+  HAL_TIM_Base_Start(&htim1);
   /* USER CODE END TIM1_Init 2 */
 
 }

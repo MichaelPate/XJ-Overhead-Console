@@ -63,6 +63,7 @@ bool LCD_Init(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t rows, uint8_t co
         	// these steps come from https://controllerstech.com/create-1-microsecond-delay-stm32/
         	__HAL_TIM_SET_COUNTER(&htim1, 0);
         	while (__HAL_TIM_GET_COUNTER(&htim1) < 100);
+
         }
         else
         {

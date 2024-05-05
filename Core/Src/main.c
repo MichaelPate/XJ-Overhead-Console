@@ -101,9 +101,6 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-
-
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -174,12 +171,15 @@ int main(void)
 
 
   /* Display a splash screen on the LCD */
-  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);	// from scanning, LCD I2C addr is 0x27
-  HAL_Delay(500);
-  LCD_PrintString((uint8_t*)"Hello,", 6);
-  LCD_SetCursorPosition(0, 2);
-  LCD_PrintString((uint8_t*)"World!", 6);
+  // LCD_Init() must be called AFTER I2C and TIM1 Inits!
+  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
   LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
+  LCD_PrintString((uint8_t*)"Hello,", 6);
+  LCD_SetCursorPosition(0, 1);
+  LCD_PrintString((uint8_t*)"World!", 6);
+  //HAL_Delay(5000);
+  //LCD_Command(LCD_CLEAR, LCD_PARAM_SET);	// note LCD_CLEAR sets cursor to 0,0 too
+  //LCD_PrintString((uint8_t*)"TEST", 4);
 
   /* Get and set the RTC module */
   // Setting RTC is done following the procedure in UM1725 section 57.2
@@ -189,8 +189,8 @@ int main(void)
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
-  char timeString[8];
-  char dateString[8];
+  char timeString[9];
+  char dateString[9];
   uint8_t uartBuffer[10] = {0};
   RTC_DateTypeDef dateRTC;
   RTC_TimeTypeDef timeRTC;
@@ -292,6 +292,12 @@ int main(void)
 	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
 	  printf(dateString);
 	  printf("\r\n");
+
+	  // For now we just print the RTC time to the LCD
+	  LCD_SetCursorPosition(0,2);
+	  LCD_PrintString((uint8_t*)timeString, 8);
+	  LCD_SetCursorPosition(0,3);
+	  LCD_PrintString((uint8_t*)dateString, 8);
 	  HAL_Delay(1000);
 
     /* USER CODE END WHILE */
