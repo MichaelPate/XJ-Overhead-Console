@@ -1,0 +1,7 @@
+../Core/Src/lcd.c:32:6:LCD_Init	12
+../Core/Src/lcd.c:132:6:LCD_Command	24
+../Core/Src/lcd.c:263:6:LCD_Backlight	3
+../Core/Src/lcd.c:284:6:LCD_SetCursorPosition	2
+../Core/Src/lcd.c:306:6:LCD_PrintString	3
+../Core/Src/lcd.c:325:6:LCD_PrintChar	1
+../Core/Src/lcd.c:337:13:LCD_WriteByte	3

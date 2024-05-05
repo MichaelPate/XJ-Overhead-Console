@@ -23,6 +23,7 @@
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -30,6 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "lcd.h"
 
 /* USER CODE END Includes */
 
@@ -99,6 +101,9 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+
+
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -118,6 +123,7 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   /* A note on when to use blocking or nonblocking UART RX
   //when we want data received,
@@ -168,7 +174,12 @@ int main(void)
 
 
   /* Display a splash screen on the LCD */
-
+  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);	// from scanning, LCD I2C addr is 0x27
+  HAL_Delay(500);
+  LCD_PrintString((uint8_t*)"Hello,", 6);
+  LCD_SetCursorPosition(0, 2);
+  LCD_PrintString((uint8_t*)"World!", 6);
+  LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
 
   /* Get and set the RTC module */
   // Setting RTC is done following the procedure in UM1725 section 57.2
