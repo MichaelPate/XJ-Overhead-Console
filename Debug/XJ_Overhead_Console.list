@@ -7,45 +7,45 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         000057e0  080001a0  080001a0  000011a0  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000294  08005980  08005980  00006980  2**2
+  2 .rodata       00000284  08005980  08005980  00006980  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08005c14  08005c14  00007068  2**0
+  3 .ARM.extab    00000000  08005c04  08005c04  00007068  2**0
                   CONTENTS
-  4 .ARM          00000008  08005c14  08005c14  00006c14  2**2
+  4 .ARM          00000008  08005c04  08005c04  00006c04  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08005c1c  08005c1c  00007068  2**0
+  5 .preinit_array 00000000  08005c0c  08005c0c  00007068  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08005c1c  08005c1c  00006c1c  2**2
+  6 .init_array   00000004  08005c0c  08005c0c  00006c0c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  08005c20  08005c20  00006c20  2**2
+  7 .fini_array   00000004  08005c10  08005c10  00006c10  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         00000068  20000000  08005c24  00007000  2**2
+  8 .data         00000068  20000000  08005c14  00007000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          000003bc  20000068  08005c8c  00007068  2**2
+  9 .bss          000003bc  20000068  08005c7c  00007068  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  20000424  08005c8c  00007424  2**0
+ 10 ._user_heap_stack 00000604  20000424  08005c7c  00007424  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  00007068  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00012617  00000000  00000000  00007098  2**0
+ 12 .debug_info   000125f7  00000000  00000000  00007098  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00003256  00000000  00000000  000196af  2**0
+ 13 .debug_abbrev 00003270  00000000  00000000  0001968f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000010f8  00000000  00000000  0001c908  2**3
+ 14 .debug_aranges 000010f8  00000000  00000000  0001c900  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 00000d0e  00000000  00000000  0001da00  2**0
+ 15 .debug_rnglists 00000d0e  00000000  00000000  0001d9f8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001a3a1  00000000  00000000  0001e70e  2**0
+ 16 .debug_macro  0001a39b  00000000  00000000  0001e706  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0001829d  00000000  00000000  00038aaf  2**0
+ 17 .debug_line   0001829a  00000000  00000000  00038aa1  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0009d6b0  00000000  00000000  00050d4c  2**0
+ 18 .debug_str    0009d69f  00000000  00000000  00050d3b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000ee3fc  2**0
+ 19 .comment      00000043  00000000  00000000  000ee3da  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00004f48  00000000  00000000  000ee440  2**2
+ 20 .debug_frame  00004f4c  00000000  00000000  000ee420  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000062  00000000  00000000  000f3388  2**0
+ 21 .debug_line_str 00000062  00000000  00000000  000f336c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1142,19 +1142,19 @@ int main(void)
  80009c6:	f000 fc59 	bl	800127c <MX_USART1_UART_Init>
   MX_USART6_UART_Init();
  80009ca:	f000 fcab 	bl	8001324 <MX_USART6_UART_Init>
-  /* USER CODE BEGIN 2 */
-
-  // Here is we will test RX through DMA and just cut off the rest of the code for now
-
-  //printf("Put something in the terminal.\r\n");
-  printf("Send only newlines, not carriage returns.");
- 80009ce:	48b6      	ldr	r0, [pc, #728]	@ (8000ca8 <main+0x30c>)
- 80009d0:	f003 feec 	bl	80047ac <iprintf>
-  // so that we can just grab the data from the buffer whenever we want to use it
-  // so that our program loop isnt getting interrupted by the GPS sending new data.
   // whereas for getting user input (like above) we could just use blocking statements
+   */
 
-  // Enable backup domain access (according to documentation UM1725 57.2.3)
+  // All UART RXs in this code expect a single "\n" control character
+  // from the serial terminal, so give a warning to anyone trying to communicate
+  printf("Send only newlines, not also carriage returns.\r\n");
+ 80009ce:	48b6      	ldr	r0, [pc, #728]	@ (8000ca8 <main+0x30c>)
+ 80009d0:	f003 ff5c 	bl	800488c <puts>
+
+
+  /* Get and set the RTC module */
+  // Setting RTC is done following the procedure in UM1725 section 57.2
+  // Enable backup domain access for the RTC first (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
  80009d4:	2300      	movs	r3, #0
  80009d6:	62fb      	str	r3, [r7, #44]	@ 0x2c
@@ -1186,8 +1186,6 @@ int main(void)
  8000a0e:	2201      	movs	r2, #1
  8000a10:	601a      	str	r2, [r3, #0]
 
-
-  // get and display the current time
   char timeString[8];
   char dateString[8];
   uint8_t uartBuffer[10] = {0};
@@ -1199,6 +1197,7 @@ int main(void)
  8000a1e:	809a      	strh	r2, [r3, #4]
   RTC_DateTypeDef dateRTC;
   RTC_TimeTypeDef timeRTC;
+
   printf("Current date and time: ");
  8000a20:	48a4      	ldr	r0, [pc, #656]	@ (8000cb4 <main+0x318>)
  8000a22:	f003 fec3 	bl	80047ac <iprintf>
@@ -1214,6 +1213,7 @@ int main(void)
  8000a3a:	4619      	mov	r1, r3
  8000a3c:	489e      	ldr	r0, [pc, #632]	@ (8000cb8 <main+0x31c>)
  8000a3e:	f002 ff18 	bl	8003872 <HAL_RTC_GetDate>
+
   sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
  8000a42:	f897 3030 	ldrb.w	r3, [r7, #48]	@ 0x30
  8000a46:	461a      	mov	r2, r3
@@ -1247,10 +1247,10 @@ int main(void)
  8000a8e:	f107 0354 	add.w	r3, r7, #84	@ 0x54
  8000a92:	4618      	mov	r0, r3
  8000a94:	f003 fe8a 	bl	80047ac <iprintf>
+
   printf("\r\nSet the time? (y/n)\r\n");
  8000a98:	488a      	ldr	r0, [pc, #552]	@ (8000cc4 <main+0x328>)
  8000a9a:	f003 fef7 	bl	800488c <puts>
-  //HAL_Delay(250);
   HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
  8000a9e:	f107 0148 	add.w	r1, r7, #72	@ 0x48
  8000aa2:	f04f 33ff 	mov.w	r3, #4294967295
@@ -1267,7 +1267,6 @@ int main(void)
  8000abc:	f040 8112 	bne.w	8000ce4 <main+0x348>
   {
 	  // ask the user to set the time and date
-
 	  printf("Enter the time in 24hr format (HH:MM)\r\n");
  8000ac0:	4882      	ldr	r0, [pc, #520]	@ (8000ccc <main+0x330>)
  8000ac2:	f003 fee3 	bl	800488c <puts>
@@ -1277,6 +1276,7 @@ int main(void)
  8000ace:	2206      	movs	r2, #6
  8000ad0:	487d      	ldr	r0, [pc, #500]	@ (8000cc8 <main+0x32c>)
  8000ad2:	f003 f959 	bl	8003d88 <HAL_UART_Receive>
+
 	  char charHrs[2] = {uartBuffer[0], uartBuffer[1]};
  8000ad6:	f897 3048 	ldrb.w	r3, [r7, #72]	@ 0x48
  8000ada:	f887 3028 	strb.w	r3, [r7, #40]	@ 0x28
@@ -1301,6 +1301,7 @@ int main(void)
  8000b12:	4603      	mov	r3, r0
  8000b14:	b2db      	uxtb	r3, r3
  8000b16:	f887 3031 	strb.w	r3, [r7, #49]	@ 0x31
+
 	  uint8_t dst = 0;
  8000b1a:	2300      	movs	r3, #0
  8000b1c:	f887 3067 	strb.w	r3, [r7, #103]	@ 0x67
@@ -1313,6 +1314,7 @@ int main(void)
  8000b2e:	2202      	movs	r2, #2
  8000b30:	4865      	ldr	r0, [pc, #404]	@ (8000cc8 <main+0x32c>)
  8000b32:	f003 f929 	bl	8003d88 <HAL_UART_Receive>
+
 	  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y') dst = RTC_DAYLIGHTSAVING_ADD1H;
  8000b36:	f897 3048 	ldrb.w	r3, [r7, #72]	@ 0x48
  8000b3a:	2b79      	cmp	r3, #121	@ 0x79
@@ -1326,6 +1328,7 @@ int main(void)
 	  else dst = RTC_DAYLIGHTSAVING_NONE;
  8000b4e:	2300      	movs	r3, #0
  8000b50:	f887 3067 	strb.w	r3, [r7, #103]	@ 0x67
+
 	  timeRTC.Seconds = 0;
  8000b54:	2300      	movs	r3, #0
  8000b56:	f887 3032 	strb.w	r3, [r7, #50]	@ 0x32
@@ -1338,6 +1341,7 @@ int main(void)
 	  timeRTC.StoreOperation = RTC_STOREOPERATION_RESET;
  8000b66:	2300      	movs	r3, #0
  8000b68:	643b      	str	r3, [r7, #64]	@ 0x40
+
 	  if (HAL_RTC_SetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN) != HAL_OK)
  8000b6a:	f107 0330 	add.w	r3, r7, #48	@ 0x30
  8000b6e:	2200      	movs	r2, #0
@@ -1364,6 +1368,7 @@ int main(void)
  8000b96:	2208      	movs	r2, #8
  8000b98:	484b      	ldr	r0, [pc, #300]	@ (8000cc8 <main+0x32c>)
  8000b9a:	f003 f8f5 	bl	8003d88 <HAL_UART_Receive>
+
 	  char charMM[2] = {uartBuffer[0], uartBuffer[1]};
  8000b9e:	f897 3048 	ldrb.w	r3, [r7, #72]	@ 0x48
  8000ba2:	f887 3020 	strb.w	r3, [r7, #32]
@@ -1400,6 +1405,7 @@ int main(void)
  8000bf4:	4603      	mov	r3, r0
  8000bf6:	b2db      	uxtb	r3, r3
  8000bf8:	f887 3047 	strb.w	r3, [r7, #71]	@ 0x47
+
 	  if (HAL_RTC_SetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN) != HAL_OK)
  8000bfc:	f107 0344 	add.w	r3, r7, #68	@ 0x44
  8000c00:	2200      	movs	r2, #0
@@ -1417,7 +1423,7 @@ int main(void)
  8000c16:	f000 f91b 	bl	8000e50 <Error_Handler>
 	  }
 
-	  // Update the backup register too
+	  // Update the backup register too as part of setting RTC
 	  // from https://controllerstech.com/internal-rtc-in-stm32/
 	  // The hex number was chosen randomly
 	  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
@@ -1426,6 +1432,7 @@ int main(void)
  8000c20:	4825      	ldr	r0, [pc, #148]	@ (8000cb8 <main+0x31c>)
  8000c22:	f002 ff33 	bl	8003a8c <HAL_RTCEx_BKUPWrite>
 
+	  // We'll confirm the new date and time by reading it
 	  printf("Current date and time: ");
  8000c26:	4823      	ldr	r0, [pc, #140]	@ (8000cb4 <main+0x318>)
  8000c28:	f003 fdc0 	bl	80047ac <iprintf>
@@ -1441,6 +1448,7 @@ int main(void)
  8000c40:	4619      	mov	r1, r3
  8000c42:	481d      	ldr	r0, [pc, #116]	@ (8000cb8 <main+0x31c>)
  8000c44:	f002 fe15 	bl	8003872 <HAL_RTC_GetDate>
+
 	  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
  8000c48:	f897 3030 	ldrb.w	r3, [r7, #48]	@ 0x30
  8000c4c:	461a      	mov	r2, r3
@@ -1483,28 +1491,25 @@ int main(void)
  8000ca8:	08005980 	.word	0x08005980
  8000cac:	40023800 	.word	0x40023800
  8000cb0:	42470e3c 	.word	0x42470e3c
- 8000cb4:	080059ac 	.word	0x080059ac
+ 8000cb4:	080059b0 	.word	0x080059b0
  8000cb8:	20000120 	.word	0x20000120
- 8000cbc:	080059c4 	.word	0x080059c4
- 8000cc0:	080059d4 	.word	0x080059d4
- 8000cc4:	080059e4 	.word	0x080059e4
+ 8000cbc:	080059c8 	.word	0x080059c8
+ 8000cc0:	080059d8 	.word	0x080059d8
+ 8000cc4:	080059e8 	.word	0x080059e8
  8000cc8:	200001e4 	.word	0x200001e4
- 8000ccc:	080059fc 	.word	0x080059fc
- 8000cd0:	08005a24 	.word	0x08005a24
- 8000cd4:	08005a44 	.word	0x08005a44
- 8000cd8:	08005a54 	.word	0x08005a54
- 8000cdc:	08005a70 	.word	0x08005a70
- 8000ce0:	08005a80 	.word	0x08005a80
+ 8000ccc:	08005a00 	.word	0x08005a00
+ 8000cd0:	08005a28 	.word	0x08005a28
+ 8000cd4:	08005a48 	.word	0x08005a48
+ 8000cd8:	08005a58 	.word	0x08005a58
+ 8000cdc:	08005a74 	.word	0x08005a74
+ 8000ce0:	08005a84 	.word	0x08005a84
   }
-  else
-  {
-	  // else do nothing
-	  printf("Skipping time set.\r\n");
+  else printf("Skipping time set.\r\n");
  8000ce4:	481e      	ldr	r0, [pc, #120]	@ (8000d60 <main+0x3c4>)
  8000ce6:	f003 fdd1 	bl	800488c <puts>
   while (1)
   {
-	  // The goal is to transmit the now set time from the RTC, once a second.
+	  // The goal for now is to transmit the now set time from the RTC, once a second.
 	  RTC_DateTypeDef getDate;
 	  RTC_TimeTypeDef getTime;
 	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
@@ -1561,11 +1566,11 @@ int main(void)
   {
  8000d5c:	bf00      	nop
  8000d5e:	e7c4      	b.n	8000cea <main+0x34e>
- 8000d60:	08005a84 	.word	0x08005a84
+ 8000d60:	08005a88 	.word	0x08005a88
  8000d64:	20000120 	.word	0x20000120
- 8000d68:	080059c4 	.word	0x080059c4
- 8000d6c:	080059d4 	.word	0x080059d4
- 8000d70:	08005a80 	.word	0x08005a80
+ 8000d68:	080059c8 	.word	0x080059c8
+ 8000d6c:	080059d8 	.word	0x080059d8
+ 8000d70:	08005a84 	.word	0x08005a84
 
 08000d74 <SystemClock_Config>:
 /**
@@ -1737,7 +1742,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8000e5e:	bf00      	nop
  8000e60:	e7fd      	b.n	8000e5e <Error_Handler+0xe>
  8000e62:	bf00      	nop
- 8000e64:	08005aac 	.word	0x08005aac
+ 8000e64:	08005a9c 	.word	0x08005a9c
 
 08000e68 <MX_RTC_Init>:
 
@@ -3148,7 +3153,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8001580:	20000068 	.word	0x20000068
   ldr r2, =_sidata
- 8001584:	08005c24 	.word	0x08005c24
+ 8001584:	08005c14 	.word	0x08005c14
   ldr r2, =_sbss
  8001588:	20000068 	.word	0x20000068
   ldr r4, =_ebss
@@ -5535,7 +5540,7 @@ static uint32_t DMA_CalcBaseAndBitshift(DMA_HandleTypeDef *hdma)
  8002278:	4770      	bx	lr
  800227a:	bf00      	nop
  800227c:	aaaaaaab 	.word	0xaaaaaaab
- 8002280:	08005ad8 	.word	0x08005ad8
+ 8002280:	08005ac8 	.word	0x08005ac8
 
 08002284 <DMA_CheckFifoParam>:
   * @param  hdma       pointer to a DMA_HandleTypeDef structure that contains
@@ -7878,7 +7883,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  800300e:	bf00      	nop
  8003010:	40023c00 	.word	0x40023c00
  8003014:	40023800 	.word	0x40023800
- 8003018:	08005ac0 	.word	0x08005ac0
+ 8003018:	08005ab0 	.word	0x08005ab0
  800301c:	20000000 	.word	0x20000000
  8003020:	20000004 	.word	0x20000004
 
@@ -8180,7 +8185,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8003264:	4618      	mov	r0, r3
  8003266:	bd80      	pop	{r7, pc}
  8003268:	40023800 	.word	0x40023800
- 800326c:	08005ad0 	.word	0x08005ad0
+ 800326c:	08005ac0 	.word	0x08005ac0
 
 08003270 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -8206,7 +8211,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  800328c:	4618      	mov	r0, r3
  800328e:	bd80      	pop	{r7, pc}
  8003290:	40023800 	.word	0x40023800
- 8003294:	08005ad0 	.word	0x08005ad0
+ 8003294:	08005ac0 	.word	0x08005ac0
 
 08003298 <HAL_RCCEx_PeriphCLKConfig>:
   *        domain (RTC and RCC_BDCR register expect BKPSRAM) will be reset
@@ -11349,7 +11354,7 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8004608:	d1f6      	bne.n	80045f8 <_strtol_l.constprop.0+0xd8>
  800460a:	f8c8 1000 	str.w	r1, [r8]
  800460e:	e794      	b.n	800453a <_strtol_l.constprop.0+0x1a>
- 8004610:	08005ae1 	.word	0x08005ae1
+ 8004610:	08005ad1 	.word	0x08005ad1
 
 08004614 <strtol>:
  8004614:	4613      	mov	r3, r2
@@ -11968,10 +11973,10 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8004b66:	4798      	blx	r3
  8004b68:	3601      	adds	r6, #1
  8004b6a:	e7f2      	b.n	8004b52 <__libc_init_array+0x1e>
- 8004b6c:	08005c1c 	.word	0x08005c1c
- 8004b70:	08005c1c 	.word	0x08005c1c
- 8004b74:	08005c1c 	.word	0x08005c1c
- 8004b78:	08005c20 	.word	0x08005c20
+ 8004b6c:	08005c0c 	.word	0x08005c0c
+ 8004b70:	08005c0c 	.word	0x08005c0c
+ 8004b74:	08005c0c 	.word	0x08005c0c
+ 8004b78:	08005c10 	.word	0x08005c10
 
 08004b7c <__retarget_lock_init_recursive>:
  8004b7c:	4770      	bx	lr
@@ -12481,11 +12486,11 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8005008:	4638      	mov	r0, r7
  800500a:	f000 f9bb 	bl	8005384 <_printf_i>
  800500e:	e7ed      	b.n	8004fec <_svfiprintf_r+0x1c0>
- 8005010:	08005be1 	.word	0x08005be1
- 8005014:	08005beb 	.word	0x08005beb
+ 8005010:	08005bd1 	.word	0x08005bd1
+ 8005014:	08005bdb 	.word	0x08005bdb
  8005018:	00000000 	.word	0x00000000
  800501c:	08004d75 	.word	0x08004d75
- 8005020:	08005be7 	.word	0x08005be7
+ 8005020:	08005bd7 	.word	0x08005bd7
 
 08005024 <__sfputc_r>:
  8005024:	6893      	ldr	r3, [r2, #8]
@@ -12751,11 +12756,11 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  800528c:	4630      	mov	r0, r6
  800528e:	f000 f879 	bl	8005384 <_printf_i>
  8005292:	e7e4      	b.n	800525e <_vfiprintf_r+0x1e6>
- 8005294:	08005be1 	.word	0x08005be1
- 8005298:	08005beb 	.word	0x08005beb
+ 8005294:	08005bd1 	.word	0x08005bd1
+ 8005298:	08005bdb 	.word	0x08005bdb
  800529c:	00000000 	.word	0x00000000
  80052a0:	08005053 	.word	0x08005053
- 80052a4:	08005be7 	.word	0x08005be7
+ 80052a4:	08005bd7 	.word	0x08005bd7
 
 080052a8 <_printf_common>:
  80052a8:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -13086,8 +13091,8 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  80055b4:	f104 0619 	add.w	r6, r4, #25
  80055b8:	e7f5      	b.n	80055a6 <_printf_i+0x222>
  80055ba:	bf00      	nop
- 80055bc:	08005bf2 	.word	0x08005bf2
- 80055c0:	08005c03 	.word	0x08005c03
+ 80055bc:	08005be2 	.word	0x08005be2
+ 80055c0:	08005bf3 	.word	0x08005bf3
 
 080055c4 <__sflush_r>:
  80055c4:	f9b1 200c 	ldrsh.w	r2, [r1, #12]

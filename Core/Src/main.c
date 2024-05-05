@@ -51,8 +51,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define RXBUFSIZE 20
-uint8_t UART2_rxBuffer[RXBUFSIZE] = {0};
+// As a style guide, all private vars here should be prefaced with gpv_ for Global Private Variable
+
+int gpv_UART2_DMA_RX_Complete = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,7 +78,7 @@ PUTCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int g_UART2RXCmplt = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -119,9 +120,7 @@ int main(void)
   MX_USART6_UART_Init();
 
   /* USER CODE BEGIN 2 */
-  printf("Send only newlines, not carriage returns.\r\n");
-
-  /*
+  /* When to use blocking or nonblocking UART RX
   //when we want data received,
   // just define a buffer in the size of data we want to receive
   // then call a dma receive for that number of bytes
@@ -144,48 +143,64 @@ int main(void)
   // whereas for getting user input (like above) we could just use blocking statements
    */
 
-  // Enable backup domain access for the RTC (according to documentation UM1725 57.2.3)
+  // All UART RXs in this code expect a single "\n" control character
+  // from the serial terminal, so give a warning to anyone trying to communicate
+  printf("Send only newlines, not also carriage returns.\r\n");
+
+
+  /* Get and set the RTC module */
+  // Setting RTC is done following the procedure in UM1725 section 57.2
+  // Enable backup domain access for the RTC first (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
-  // Setting RTC is done following the procedure in UM1725 section 57.2.4
   char timeString[8];
   char dateString[8];
   uint8_t uartBuffer[10] = {0};
   RTC_DateTypeDef dateRTC;
   RTC_TimeTypeDef timeRTC;
+
   printf("Current date and time: ");
   HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
   HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+
   sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
   printf(timeString);
   printf(" ");
   sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
   printf(dateString);
+
   printf("\r\nSet the time? (y/n)\r\n");
   HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
 
   if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y')
   {
 	  // ask the user to set the time and date
-
 	  printf("Enter the time in 24hr format (HH:MM)\r\n");
 	  HAL_UART_Receive(&huart2, uartBuffer, 6, HAL_MAX_DELAY);
+
 	  char charHrs[2] = {uartBuffer[0], uartBuffer[1]};
 	  char charMins[2] = {uartBuffer[3], uartBuffer[4]};
 	  timeRTC.Hours = atoi(charHrs);
 	  timeRTC.Minutes = atoi(charMins);
+
 	  uint8_t dst = 0;
 	  printf("Daylight savings time? (y/n)\r\n");
 	  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
+
 	  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y') dst = RTC_DAYLIGHTSAVING_ADD1H;
 	  else dst = RTC_DAYLIGHTSAVING_NONE;
+
+	  // The daylight savings and store operation interfaces have been
+	  // deprecated but we will worry about that later
+	  // TODO: Update interface for RTC daylight savings time
 	  timeRTC.Seconds = 0;
 	  timeRTC.TimeFormat = RTC_HOURFORMAT12_PM;
 	  timeRTC.DayLightSaving = dst;
 	  timeRTC.StoreOperation = RTC_STOREOPERATION_RESET;
+
 	  if (HAL_RTC_SetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN) != HAL_OK)
 	  {
 		printf("INVALID TIME.\r\n");
@@ -194,26 +209,30 @@ int main(void)
 
 	  printf("Enter the date (MM-DD-YY)\r\n");
 	  HAL_UART_Receive(&huart2, uartBuffer, 8, HAL_MAX_DELAY);
+
 	  char charMM[2] = {uartBuffer[0], uartBuffer[1]};
 	  char charDD[2] = {uartBuffer[3], uartBuffer[4]};
 	  char charYY[2] = {uartBuffer[6], uartBuffer[7]};
 	  dateRTC.Month = atoi(charMM);
 	  dateRTC.Date = atoi(charDD);
 	  dateRTC.Year = atoi(charYY);
+
 	  if (HAL_RTC_SetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN) != HAL_OK)
 	  {
 		  printf("INVALID DATE.\r\n");
 		  Error_Handler();
 	  }
 
-	  // Update the backup register too
+	  // Update the backup register too as part of setting RTC
 	  // from https://controllerstech.com/internal-rtc-in-stm32/
 	  // The hex number was chosen randomly
 	  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
 
+	  // We'll confirm the new date and time by reading it out
 	  printf("Current date and time: ");
 	  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
 	  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+
 	  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
 	  printf(timeString);
 	  printf(" ");
@@ -221,11 +240,8 @@ int main(void)
 	  printf(dateString);
 	  printf("\r\n");
   }
-  else
-  {
-	  // else do nothing
-	  printf("Skipping time set.\r\n");
-  }
+  else printf("Skipping time set.\r\n");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -307,7 +323,7 @@ void SystemClock_Config(void)
   */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	g_UART2RXCmplt = 1;
+	gpv_UART2_DMA_RX_Complete = 1;
 	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
     // This was commented out because we are currently using a circular DMA buffer
     // which runs continuously, so there is no need to restart the DMA RX process after one is completed
