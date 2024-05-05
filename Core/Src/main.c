@@ -117,24 +117,16 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+
   /* USER CODE BEGIN 2 */
+  printf("Send only newlines, not carriage returns.\r\n");
 
-  // Here is we will test RX through DMA and just cut off the rest of the code for now
-
-  //printf("Put something in the terminal.\r\n");
-  printf("Send only newlines, not carriage returns.");
-
-  //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
-
-
+  /*
   //when we want data received,
   // just define a buffer in the size of data we want to receive
   // then call a dma receive for that number of bytes
   // and wait for the finished flag to be set
   // the finish flag gets set inside the tx complete callback
-
-
-
   // This strategy is good for getting data for changing settings for example
   //printf("give me 4 bytes of data.\r\n");
   //HAL_UART_Receive_DMA(&huart2, buf, 4);
@@ -150,17 +142,15 @@ int main(void)
   // so that we can just grab the data from the buffer whenever we want to use it
   // so that our program loop isnt getting interrupted by the GPS sending new data.
   // whereas for getting user input (like above) we could just use blocking statements
+   */
 
-  // Enable backup domain access (according to documentation UM1725 57.2.3)
+  // Enable backup domain access for the RTC (according to documentation UM1725 57.2.3)
   __HAL_RCC_PWR_CLK_ENABLE();
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
   // Setting RTC is done following the procedure in UM1725 section 57.2.4
-
-
-  // get and display the current time
   char timeString[8];
   char dateString[8];
   uint8_t uartBuffer[10] = {0};
@@ -175,7 +165,6 @@ int main(void)
   sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
   printf(dateString);
   printf("\r\nSet the time? (y/n)\r\n");
-  //HAL_Delay(250);
   HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
 
   if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y')
@@ -237,45 +226,13 @@ int main(void)
 	  // else do nothing
 	  printf("Skipping time set.\r\n");
   }
-
-
-
-  // For our example time lets do
-  // 12:34:56 PM, June 29, 2024
-  /*
-  RTC_TimeTypeDef demoStartTime;
-  demoStartTime.Hours = 12;
-  demoStartTime.Minutes = 34;
-  demoStartTime.Seconds = 56;
-  demoStartTime.TimeFormat = RTC_HOURFORMAT12_PM;
-  demoStartTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-  demoStartTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &demoStartTime, RTC_FORMAT_BIN) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-  RTC_DateTypeDef demoStartDate;
-  demoStartDate.Month = RTC_MONTH_JUNE;
-  demoStartDate.Date = 29;
-  demoStartDate.Year = 24;
-  if (HAL_RTC_SetDate(&hrtc, &demoStartDate, RTC_FORMAT_BIN) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-
-   *
-   */
-
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
   while (1)
   {
-	  // The goal is to transmit the now set time from the RTC, once a second.
+	  // The goal for now is to transmit the now set time from the RTC, once a second.
 	  RTC_DateTypeDef getDate;
 	  RTC_TimeTypeDef getTime;
 	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
@@ -350,14 +307,8 @@ void SystemClock_Config(void)
   */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	printf("Got data finished\r\n");
 	g_UART2RXCmplt = 1;
 	// this function from https://deepbluembedded.com/how-to-receive-uart-serial-data-with-stm32-dma-interrupt-polling/
-	//printf("Im calling back.\r\n");
-	// this is where the incoming data could be moved instead of just echoing
-	// TODO: an experiment would be to, in main(), print out the contents of rxbuffer every second, remove this transmit, and see what happens to that buffer as data is added.
-    //HAL_UART_Transmit(&huart2, UART2_rxBuffer, RXBUFSIZE, 100);
-
     // This was commented out because we are currently using a circular DMA buffer
     // which runs continuously, so there is no need to restart the DMA RX process after one is completed
     //HAL_UART_Receive_DMA(&huart2, UART2_rxBuffer, RXBUFSIZE);
