@@ -13,6 +13,9 @@ The overhead console, or trip computer, should display the folling data by the t
   - Gyroscope should be able to be zeroed
 - Accelerometer readings that are above a threshold
   - Threshold should be settable
+- System voltage
+- The computer should know if the car is running or not
+- The hardware circuit should provide a couple spare analog and digital IO for future use
 
 
 The trip computer should be able to control the folling
