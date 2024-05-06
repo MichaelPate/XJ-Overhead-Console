@@ -10,7 +10,6 @@
 
 #ifndef INC_LCD_H_
 #define INC_LCD_H_
-#endif /* INC_LCD_H_ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,7 +56,11 @@ extern "C" {
 // See https://dawes.wordpress.com/2010/01/05/hd44780-instruction-set/
 
 
-typedef struct {
+/**
+  * @brief  LCD device handle structure definition
+  */
+typedef struct
+{
 	I2C_HandleTypeDef * hi2c;
 	uint8_t address;	// must be shifted left by 1
 	uint8_t rows;
@@ -67,7 +70,11 @@ typedef struct {
 	uint8_t entryWord;	// entry mode set bits
 } LCD_HandleTypeDef;
 
-typedef enum {
+/**
+  * @brief  Enumeration for available LCD commands
+  */
+typedef enum
+{
     LCD_BACKLIGHT = 0,
     LCD_DISPLAY,
     LCD_CLEAR,
@@ -79,14 +86,22 @@ typedef enum {
     LCD_DISPLAY_SHIFT
 } LCDCommands;
 
+/**
+  * @brief  Enumeration for ease of reading
+  */
 #ifndef bool
-typedef enum {
+typedef enum
+{
     false,
     true
 } bool;
 #endif
 
-typedef enum {
+/**
+  * @brief  For setting or unsetting parameters in the LCD
+  */
+typedef enum
+{
     LCD_PARAM_UNSET = 0,
     LCD_PARAM_SET
 } LCDParamsActions;
@@ -114,3 +129,6 @@ bool LCD_Backlight(uint8_t command);
 bool LCD_SetCursorPosition(uint8_t line, uint8_t row);
 bool LCD_PrintString(uint8_t * data, uint8_t length);
 bool LCD_PrintChar(uint8_t data);
+
+
+#endif /* INC_LCD_H_ */

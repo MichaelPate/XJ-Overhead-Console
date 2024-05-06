@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lcd.h"
+#include "bmp280.h"
 
 /* USER CODE END Includes */
 
@@ -189,8 +190,8 @@ int main(void)
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
-  char timeString[9];
-  char dateString[9];
+  char timeString[25];
+  char dateString[25];
   uint8_t uartBuffer[10] = {0};
   RTC_DateTypeDef dateRTC;
   RTC_TimeTypeDef timeRTC;
