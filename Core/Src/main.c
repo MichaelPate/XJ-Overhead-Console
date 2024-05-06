@@ -172,11 +172,11 @@ int main(void)
 
   /* Display a splash screen on the LCD */
   // LCD_Init() must be called AFTER I2C and TIM1 Inits!
-  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
-  LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
-  LCD_PrintString((uint8_t*)"Hello,", 6);
-  LCD_SetCursorPosition(0, 1);
-  LCD_PrintString((uint8_t*)"World!", 6);
+  //LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
+  //LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
+  //LCD_PrintString((uint8_t*)"Hello,", 6);
+  //LCD_SetCursorPosition(0, 1);
+  //LCD_PrintString((uint8_t*)"World!", 6);
   //HAL_Delay(5000);
   //LCD_Command(LCD_CLEAR, LCD_PARAM_SET);	// note LCD_CLEAR sets cursor to 0,0 too
   //LCD_PrintString((uint8_t*)"TEST", 4);
@@ -294,10 +294,11 @@ int main(void)
 	  printf("\r\n");
 
 	  // For now we just print the RTC time to the LCD
-	  LCD_SetCursorPosition(0,2);
-	  LCD_PrintString((uint8_t*)timeString, 8);
-	  LCD_SetCursorPosition(0,3);
-	  LCD_PrintString((uint8_t*)dateString, 8);
+	  //LCD_SetCursorPosition(0,2);
+	  //LCD_PrintString((uint8_t*)timeString, 8);
+	  //LCD_SetCursorPosition(0,3);
+	  //LCD_PrintString((uint8_t*)dateString, 8);
+
 	  HAL_Delay(1000);
 
     /* USER CODE END WHILE */
