@@ -725,6 +725,7 @@ BMP280_Result BMP280_Init(I2C_HandleTypeDef *hi2c, uint8_t address)
  800078c:	4b0c      	ldr	r3, [pc, #48]	@ (80007c0 <BMP280_Init+0x4c>)
  800078e:	711a      	strb	r2, [r3, #4]
 
+	// A reset must be the first thing called
 	BMP280_Reset();
  8000790:	f000 f835 	bl	80007fe <BMP280_Reset>
 

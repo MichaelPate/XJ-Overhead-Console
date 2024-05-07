@@ -51,6 +51,8 @@ static BMP280_Result __BMP280_BulkReadReg(uint8_t reg, uint8_t *buf, uint32_t si
 
 /**
  * @brief  			 Initialize the BMP280 handle
+ * @note			 Defaults: 1s standby, 16 IIR filter, normal periodic mode
+ * @note			 Defaults: 2x temp. oversampling, 16x pres. oversampling
  * @param  hi2c	 	 I2C handle to which the BMP is connected to
  * @param  address	 I2C address (7 bit)
  * @retval 			 BMP280_Error or BMP280_Success
@@ -60,6 +62,7 @@ BMP280_Result BMP280_Init(I2C_HandleTypeDef *hi2c, uint8_t address)
 	bmp1.hi2c = hi2c;
 	bmp1.address = address << 1;
 
+	// A reset must be the first thing called
 	BMP280_Reset();
 
 	// Set normal mode inactive duration (standby time)
