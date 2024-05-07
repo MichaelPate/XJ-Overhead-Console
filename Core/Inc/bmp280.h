@@ -3,6 +3,8 @@
  *
  *  Created on: May 6, 2024
  *      Author: MPate
+ *
+ *      BMP280 library adapted fom https://github.com/LonelyWolf/stm32/tree/master
  */
 
 #ifndef INC_BMP280_H_

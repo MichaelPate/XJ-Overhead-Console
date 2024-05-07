@@ -170,6 +170,80 @@ int main(void)
   }
   printf("Done.\r\n");
 
+  /* Interface with the BMP280 */
+  uint8_t retval = 0;
+  retval = BMP280_Init(&hi2c1, (uint8_t)0x76);
+  static uint32_t i, j, k;
+
+  // RAW temperature and pressure values
+  int32_t UT, UP;
+
+  // Human-readable temperature and pressure
+  int32_t temperature;
+  uint32_t pressure;
+
+  while (1) {
+  		// Check status of chip
+  		i = BMP280_GetStatus();
+  		printf("Status: [%02X] %s %s\r\n",
+  				i,
+  				(i & BMP280_STATUS_MEASURING) ? "MEASURING" : "READY",
+  				(i & BMP280_STATUS_IM_UPDATE) ? "NVM_UPDATE" : "NVM_READY"
+  			);
+
+  		// Get raw readings from the chip
+  		i = BMP280_ReadUTP(&UT, &UP);
+  		printf("Raw: T=0x%05X P=0x%05X [R=%s]\r\n",
+  				UT,
+  				UP,
+  				i ? "OK" : "ERROR"
+  			);
+
+  		if (UT == 0x80000) {
+  			// Either temperature measurement is configured as 'skip' or first conversion is not completed yet
+  			printf("Temperature: no data\r\n");
+  			// There is no sense to calculate pressure without temperature readings
+  			printf("Pressure: no temperature readings\r\n");
+  		} else {
+  			// Temperature (must be calculated first)
+  			//  UT = 0x84D3C; // test raw value: 25.90C
+  			temperature = BMP280_CalcT((int32_t)0x84DC3);
+  			int t = temperature / 100.0f;
+  			printf("Temperature: %.2iC\r\n", t);
+
+  			if (UP == 0x80000) {
+  				// Either pressure measurement is configured as 'skip' or first conversion is not completed yet
+  				printf("Pressure: no data\r\n");
+  			} else {
+  				// Pressure
+  				pressure = BMP280_CalcP(UP);
+  				printf("Pressure: %.3uPa [%.3uhPa]\r\n",
+  						pressure,
+  						pressure / 100
+  					);
+
+  				printf("mmHg: %.3u\r\n",
+  						BMP280_Pa_to_mmHg(pressure)
+  					);
+
+  			}
+  		}
+
+  		printf("------------------------\r\n");
+
+  		// Invert state of the Nucleo LED
+  		//GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
+
+  		HAL_Delay(1000);
+  	}
+
+
+
+
+
+
+
+
 
   /* Display a splash screen on the LCD */
   // LCD_Init() must be called AFTER I2C and TIM1 Inits!

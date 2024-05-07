@@ -3,6 +3,8 @@
  *
  *  Created on: May 6, 2024
  *      Author: MPate
+ *
+ *      BMP280 library adapted fom https://github.com/LonelyWolf/stm32/tree/master
  */
 
 #include "bmp280.h"
@@ -58,6 +60,23 @@ BMP280_Result BMP280_Init(I2C_HandleTypeDef *hi2c, uint8_t address)
 	bmp1.hi2c = hi2c;
 	bmp1.address = address << 1;
 
+	BMP280_Reset();
+
+	// Set normal mode inactive duration (standby time)
+	BMP280_SetStandby(BMP280_STBY_1s);
+
+	// Set IIR filter constant
+	BMP280_SetFilter(BMP280_FILTER_16);
+
+	// Set oversampling for temperature
+	BMP280_SetOSRST(BMP280_OSRST_x2);
+
+	// Set oversampling for pressure
+	BMP280_SetOSRSP(BMP280_OSRSP_x16);
+
+	// Set normal mode (perpetual periodic conversion)
+	BMP280_SetMode(BMP280_MODE_NORMAL);
+
 	return BMP280_Check();
 }
 
@@ -68,7 +87,8 @@ BMP280_Result BMP280_Init(I2C_HandleTypeDef *hi2c, uint8_t address)
  */
 BMP280_Result BMP280_Check(void)
 {
-	switch (BMP280_GetVersion())
+	uint8_t ver = BMP280_GetVersion();
+	switch (ver)
 	{
 		case BMP280_CHIP_ID1:
 			break;
@@ -90,6 +110,7 @@ BMP280_Result BMP280_Check(void)
 inline void BMP280_Reset(void)
 {
 	__BMP280_WriteReg(BMP280_REG_RESET, BMP280_CMD_RESET);
+	HAL_Delay(10);
 }
 
 /**
@@ -432,7 +453,7 @@ uint32_t BMP280_Pa_to_mmHg(uint32_t p_pa)
 static void __BMP280_WriteReg(uint8_t reg, uint8_t data)
 {
 	uint8_t buf[2] = {reg, data};
-	HAL_I2C_Master_Transmit_DMA(bmp1.hi2c, bmp1.address, buf, 2);
+	HAL_I2C_Master_Transmit(bmp1.hi2c, bmp1.address, buf, 2, 100);
 }
 
 
@@ -444,9 +465,9 @@ static void __BMP280_WriteReg(uint8_t reg, uint8_t data)
 static uint8_t __BMP280_ReadReg(uint8_t reg)
 {
 	uint8_t retval = 0;
-	HAL_I2C_Master_Transmit_DMA(bmp1.hi2c, bmp1.address, &reg, 1);
+	HAL_I2C_Master_Transmit(bmp1.hi2c, bmp1.address, &reg, 1, 100);
 	while (HAL_I2C_GetState(bmp1.hi2c) != HAL_I2C_STATE_READY);
-	HAL_I2C_Master_Receive_DMA(bmp1.hi2c, bmp1.address, &retval, 1);
+	HAL_I2C_Master_Receive(bmp1.hi2c, bmp1.address, &retval, 1, 100);
 	return retval;
 }
 
@@ -460,10 +481,10 @@ static uint8_t __BMP280_ReadReg(uint8_t reg)
  */
 static BMP280_Result __BMP280_BulkReadReg(uint8_t reg, uint8_t *buf, uint32_t size)
 {
-	if (HAL_I2C_Master_Transmit_DMA(bmp1.hi2c, bmp1.address, &reg, 1) == HAL_OK)
+	if (HAL_I2C_Master_Transmit(bmp1.hi2c, bmp1.address, &reg, 1, 100) == HAL_OK)
 	{
 		while (HAL_I2C_GetState(bmp1.hi2c) != HAL_I2C_STATE_READY);
-		if (HAL_I2C_Master_Receive_DMA(bmp1.hi2c, bmp1.address, buf, size) == HAL_OK)
+		if (HAL_I2C_Master_Receive(bmp1.hi2c, bmp1.address, buf, size, 100) == HAL_OK)
 		{
 			return BMP280_Success;
 		}
