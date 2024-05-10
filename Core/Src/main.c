@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lcd.h"
+#include "bmp280.h"
 
 /* USER CODE END Includes */
 
@@ -169,14 +170,88 @@ int main(void)
   }
   printf("Done.\r\n");
 
+  /* Interface with the BMP280 */
+  uint8_t retval = 0;
+  retval = BMP280_Init(&hi2c1, (uint8_t)0x76);
+  static uint32_t i, j, k;
+
+  // RAW temperature and pressure values
+  int32_t UT, UP;
+
+  // Human-readable temperature and pressure
+  int32_t temperature;
+  uint32_t pressure;
+
+  while (1) {
+  		// Check status of chip
+  		i = BMP280_GetStatus();
+  		printf("Status: [%02X] %s %s\r\n",
+  				i,
+  				(i & BMP280_STATUS_MEASURING) ? "MEASURING" : "READY",
+  				(i & BMP280_STATUS_IM_UPDATE) ? "NVM_UPDATE" : "NVM_READY"
+  			);
+
+  		// Get raw readings from the chip
+  		i = BMP280_ReadUTP(&UT, &UP);
+  		printf("Raw: T=0x%05X P=0x%05X [R=%s]\r\n",
+  				UT,
+  				UP,
+  				i ? "OK" : "ERROR"
+  			);
+
+  		if (UT == 0x80000) {
+  			// Either temperature measurement is configured as 'skip' or first conversion is not completed yet
+  			printf("Temperature: no data\r\n");
+  			// There is no sense to calculate pressure without temperature readings
+  			printf("Pressure: no temperature readings\r\n");
+  		} else {
+  			// Temperature (must be calculated first)
+  			//  UT = 0x84D3C; // test raw value: 25.90C
+  			temperature = BMP280_CalcT((int32_t)0x84DC3);
+  			int t = temperature / 100.0f;
+  			printf("Temperature: %.2iC\r\n", t);
+
+  			if (UP == 0x80000) {
+  				// Either pressure measurement is configured as 'skip' or first conversion is not completed yet
+  				printf("Pressure: no data\r\n");
+  			} else {
+  				// Pressure
+  				pressure = BMP280_CalcP(UP);
+  				printf("Pressure: %.3uPa [%.3uhPa]\r\n",
+  						pressure,
+  						pressure / 100
+  					);
+
+  				printf("mmHg: %.3u\r\n",
+  						BMP280_Pa_to_mmHg(pressure)
+  					);
+
+  			}
+  		}
+
+  		printf("------------------------\r\n");
+
+  		// Invert state of the Nucleo LED
+  		//GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
+
+  		HAL_Delay(1000);
+  	}
+
+
+
+
+
+
+
+
 
   /* Display a splash screen on the LCD */
   // LCD_Init() must be called AFTER I2C and TIM1 Inits!
-  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
-  LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
-  LCD_PrintString((uint8_t*)"Hello,", 6);
-  LCD_SetCursorPosition(0, 1);
-  LCD_PrintString((uint8_t*)"World!", 6);
+  //LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
+  //LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
+  //LCD_PrintString((uint8_t*)"Hello,", 6);
+  //LCD_SetCursorPosition(0, 1);
+  //LCD_PrintString((uint8_t*)"World!", 6);
   //HAL_Delay(5000);
   //LCD_Command(LCD_CLEAR, LCD_PARAM_SET);	// note LCD_CLEAR sets cursor to 0,0 too
   //LCD_PrintString((uint8_t*)"TEST", 4);
@@ -189,8 +264,8 @@ int main(void)
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
-  char timeString[9];
-  char dateString[9];
+  char timeString[25];
+  char dateString[25];
   uint8_t uartBuffer[10] = {0};
   RTC_DateTypeDef dateRTC;
   RTC_TimeTypeDef timeRTC;
@@ -294,10 +369,11 @@ int main(void)
 	  printf("\r\n");
 
 	  // For now we just print the RTC time to the LCD
-	  LCD_SetCursorPosition(0,2);
-	  LCD_PrintString((uint8_t*)timeString, 8);
-	  LCD_SetCursorPosition(0,3);
-	  LCD_PrintString((uint8_t*)dateString, 8);
+	  //LCD_SetCursorPosition(0,2);
+	  //LCD_PrintString((uint8_t*)timeString, 8);
+	  //LCD_SetCursorPosition(0,3);
+	  //LCD_PrintString((uint8_t*)dateString, 8);
+
 	  HAL_Delay(1000);
 
     /* USER CODE END WHILE */

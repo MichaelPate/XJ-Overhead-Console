@@ -15,7 +15,8 @@
 static LCD_HandleTypeDef lcd1;
 uint8_t lcd1_CommandBuffer[6] = {0};
 
-static bool LCD_WriteByte(uint8_t rsBits, uint8_t * data);
+// Local write byte function prototype
+static bool __LCD_WriteByte(uint8_t rsBits, uint8_t * data);
 
 
 /**
@@ -105,7 +106,7 @@ bool LCD_Init(I2C_HandleTypeDef *hi2c, uint8_t address, uint8_t rows, uint8_t co
     	lcdData |= LCD_BIT_2LINE;
     }
 
-    LCD_WriteByte((uint8_t)0x00, &lcdData);
+    __LCD_WriteByte((uint8_t)0x00, &lcdData);
 
     // For the last init step, turn display, cursor, and blink all on
     LCD_DisplayOn();
@@ -150,7 +151,7 @@ bool LCD_Command(LCDCommands command, LCDParamsActions action)
 			case LCD_CLEAR:
 				lcdData = LCD_BIT_DISP_CLEAR;
 
-				if (LCD_WriteByte((uint8_t)0x00, &lcdData) == false)
+				if (__LCD_WriteByte((uint8_t)0x00, &lcdData) == false)
 				{
 					return false;
 				}
@@ -164,7 +165,7 @@ bool LCD_Command(LCDCommands command, LCDParamsActions action)
 			case LCD_CURSOR_HOME:
 				lcdData = LCD_BIT_CURSOR_HOME;
 
-				if (LCD_WriteByte((uint8_t)0x00, &lcdData) == false)
+				if (__LCD_WriteByte((uint8_t)0x00, &lcdData) == false)
 				{
 					return false;
 				}
@@ -248,7 +249,7 @@ bool LCD_Command(LCDCommands command, LCDParamsActions action)
             break;
     }
 
-    return LCD_WriteByte((uint8_t)0x00, &lcdData);
+    return __LCD_WriteByte((uint8_t)0x00, &lcdData);
 }
 
 
@@ -291,7 +292,7 @@ bool LCD_SetCursorPosition(uint8_t column, uint8_t row)
 
     uint8_t lcdCommand = LCD_BIT_SETDDRAMADDR | (column + lineOffsets[row]);
 
-    return LCD_WriteByte(0x00, &lcdCommand);
+    return __LCD_WriteByte(0x00, &lcdCommand);
 }
 
 
@@ -305,7 +306,7 @@ bool LCD_PrintString(uint8_t * data, uint8_t length)
 {
     for (uint8_t i = 0; i < length; ++i)
     {
-        if (LCD_WriteByte(LCD_BIT_RS, &data[i]) == false)
+        if (__LCD_WriteByte(LCD_BIT_RS, &data[i]) == false)
         {
             return false;
         }
@@ -322,7 +323,7 @@ bool LCD_PrintString(uint8_t * data, uint8_t length)
  */
 bool LCD_PrintChar(uint8_t data)
 {
-    return LCD_WriteByte(LCD_BIT_RS, &data);
+    return __LCD_WriteByte(LCD_BIT_RS, &data);
 }
 
 
@@ -332,7 +333,7 @@ bool LCD_PrintChar(uint8_t data)
  * @param  data     Pointer to data to be sent
  * @return          True if success, false on HAL error
  */
-static bool LCD_WriteByte(uint8_t rsBits, uint8_t *data)
+static bool __LCD_WriteByte(uint8_t rsBits, uint8_t *data)
 {
     // High 4 bits
     lcd1_CommandBuffer[0] = rsBits | LCD_BIT_E | lcd1.backlight | (*data & 0xF0);  // Send data and set strobe
