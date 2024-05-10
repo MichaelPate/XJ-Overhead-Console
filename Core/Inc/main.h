@@ -71,28 +71,32 @@ void Error_Handler(void);
 #define SystemVoltage_GPIO_Port GPIOC
 #define AnalogIn2_Pin GPIO_PIN_5
 #define AnalogIn2_GPIO_Port GPIOC
-#define LED2_Pin GPIO_PIN_11
-#define LED2_GPIO_Port GPIOA
-#define LED1_Pin GPIO_PIN_12
-#define LED1_GPIO_Port GPIOA
+#define General_Error_LED_Pin GPIO_PIN_11
+#define General_Error_LED_GPIO_Port GPIOA
+#define SD_Card_Error_LED_Pin GPIO_PIN_12
+#define SD_Card_Error_LED_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define Button5_Pin GPIO_PIN_15
-#define Button5_GPIO_Port GPIOA
+#define Signal_12VKeyed_Pin GPIO_PIN_15
+#define Signal_12VKeyed_GPIO_Port GPIOA
 #define Button4_Pin GPIO_PIN_10
 #define Button4_GPIO_Port GPIOC
-#define Button3_Pin GPIO_PIN_11
-#define Button3_GPIO_Port GPIOC
-#define Button2_Pin GPIO_PIN_12
-#define Button2_GPIO_Port GPIOC
-#define Button1_Pin GPIO_PIN_2
-#define Button1_GPIO_Port GPIOD
+#define MenuButtonRight_Pin GPIO_PIN_11
+#define MenuButtonRight_GPIO_Port GPIOC
+#define MenuButtonCenter_Pin GPIO_PIN_12
+#define MenuButtonCenter_GPIO_Port GPIOC
+#define MenuButtonLeft_Pin GPIO_PIN_2
+#define MenuButtonLeft_GPIO_Port GPIOD
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
 #define Piezo_Pin GPIO_PIN_4
 #define Piezo_GPIO_Port GPIOB
+#define Toggle_Security_Pin GPIO_PIN_6
+#define Toggle_Security_GPIO_Port GPIOB
+#define Toggle_Datalogging_Pin GPIO_PIN_7
+#define Toggle_Datalogging_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

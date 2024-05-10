@@ -238,13 +238,6 @@ int main(void)
   	}
 
 
-
-
-
-
-
-
-
   /* Display a splash screen on the LCD */
   // LCD_Init() must be called AFTER I2C and TIM1 Inits!
   //LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
@@ -354,8 +347,130 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+#define LCD_INTERVAL_MS	500
+#define DATALOG_INTERVAL_MS 5000
+  uint32_t LCD_PrevTick = 0;
+  uint32_t Datalog_PrevTick = 0;
+
+  typedef enum
+  {
+	State_IDLE = 0,
+  	State_INIT = 1,
+	State_RUN = 2,
+	State_SECURE = 3
+  } Controller_State;
+  Controller_State mainState;
+
+
+  // Main program loop
   while (1)
   {
+	  // Main state machine
+	  switch (mainState)
+	  {
+	  case State_IDLE:
+
+		  /*
+		   * 	TODO: Implement IDLE state
+		   */
+
+		  break;
+	  case State_INIT:
+
+		  /*
+		   * 	TODO: Implement INITIALIZATION state
+		   */
+
+		  break;
+	  case State_RUN:
+		  // Running state procedure
+		  if (HAL_GPIO_ReadPin(GPIOA, Signal_12VKeyed_Pin) == 1)	// If 12V Keyed present, normal operation
+		  {
+			  /*
+			   * 	TODO: Go through each sensor and put its raw data into the buffers
+			   */
+
+
+			  /*
+			   * 	TODO: Process the raw data from buffers and place into final value storage
+			   */
+
+
+			  /*
+			   * 	TODO: Check for the 3 flags and light LEDs accordingly: GPS locked, SD error, general error
+			   */
+
+
+			  /*
+			   * 	Check the datalog interval timer and log the data if needed
+			   */
+			  uint32_t Datalog_CurrTick = HAL_GetTick();
+			  if (Datalog_CurrTick - Datalog_PrevTick > DATALOG_INTERVAL_MS)
+			  {
+				  Datalog_PrevTick = Datalog_CurrTick;
+
+				  if (HAL_GPIO_ReadPin(GPIOB, Toggle_Datalogging_Pin) == 1)
+				  {
+					  /*
+					   * 	TODO: Save all the final data into the SD card
+					   */
+				  }
+			  }
+
+
+			  /*
+			   * 	Check the LCD interval timer and display the data page
+			   */
+			  uint32_t LCD_CurrTick = HAL_GetTick();
+			  if (LCD_CurrTick - LCD_PrevTick > LCD_INTERVAL_MS)
+			  {
+				  LCD_PrevTick = LCD_CurrTick;
+
+				  /*
+				   * 	TODO: Run the display page switch case here to display the current data page on an interval
+				   */
+
+				  /*
+				   * 	TODO: Print data to the UART if we established a connection during initialization
+				   */
+			  }
+		  }
+		  else	// 12V Keyed lost, begin shutdown
+		  {
+			  // Shutdown SD datalogging if enabled
+			  if (HAL_GPIO_ReadPin(GPIOB, Toggle_Datalogging_Pin) == 1)
+			  {
+				  /*
+				   * 	TODO: Close the datalog file and do something to de-init the SD card
+				   */
+			  }
+
+			  // Now decide which state to go into
+			  if (HAL_GPIO_ReadPin(GPIOB, Toggle_Security_Pin) == 1)
+			  {
+				  mainState = State_SECURE;
+			  }
+			  else
+			  {
+				  mainState = State_IDLE;
+			  }
+		  }
+		  break;
+	  case State_SECURE:
+
+		  /*
+		   * 	TODO: Implement SECURITY state
+		   */
+
+		  break;
+	  default:
+		  // error situation here, try going to idle
+		  mainState = State_IDLE;
+		  break;
+	  }
+
+	  /* This is old testing code, a sample loop
 	  // The goal for now is to transmit the now set time from the RTC, once a second.
 	  RTC_DateTypeDef getDate;
 	  RTC_TimeTypeDef getTime;
@@ -375,6 +490,7 @@ int main(void)
 	  //LCD_PrintString((uint8_t*)dateString, 8);
 
 	  HAL_Delay(1000);
+	  */
 
     /* USER CODE END WHILE */
 
