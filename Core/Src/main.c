@@ -77,6 +77,13 @@ PUTCHAR_PROTOTYPE
   HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
   return ch;
 }
+
+void BMP280_DriverTest();
+void GY521_DriverTest();
+void UART_UserSetRTC();
+void Test_LoopTest();
+void UART_I2CScanDevices();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,28 +130,6 @@ int main(void)
   MX_USART6_UART_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  /* A note on when to use blocking or nonblocking UART RX
-  //when we want data received,
-  // just define a buffer in the size of data we want to receive
-  // then call a dma receive for that number of bytes
-  // and wait for the finished flag to be set
-  // the finish flag gets set inside the tx complete callback
-  // This strategy is good for getting data for changing settings for example
-  //printf("give me 4 bytes of data.\r\n");
-  //HAL_UART_Receive_DMA(&huart2, buf, 4);
-  //HAL_UART_Receive(&huart2, buf, 4, HAL_MAX_DELAY);
-  //int number = atoi(buf);
-  //while (g_UART2RXCmplt == 0);
-  //g_UART2RXCmplt = 0;
-  // we should now have the 4 bytes in buf
-
-  // If we were to use DMA for like the GPS,
-  // we would set up that DMA to be cyclic, and make the buffer just as big
-  // as the packets that come from the GPS
-  // so that we can just grab the data from the buffer whenever we want to use it
-  // so that our program loop isnt getting interrupted by the GPS sending new data.
-  // whereas for getting user input (like above) we could just use blocking statements
-   */
 
   // All UART RXs in this code expect a single "\n" control character
   // from the serial terminal, so give a warning to anyone trying to communicate
@@ -152,102 +137,29 @@ int main(void)
 
   /* Add I2C and scan the bus for all addresses that respond */
   // TODO: Replace generic i2c scanner with a scanner that specifically looks for our modules only
-  // 20x4 LCD: 0x27, TODO: get addresses for other modules
-  printf("Scanning I2C bus.\r\n");
-  int ret = 0;
-  char i2cBuffer[5] = {0};
-  // Scan all 128 available i2c addresses
-  for (uint8_t testAddr = 1; testAddr < 128; testAddr++)
-  {
-	  ret = HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(testAddr<<1), 3, 5);
-	  if (ret == HAL_OK) // If an ACK was received at address testAddr
-	  {
-		  sprintf(i2cBuffer, "0x%X", testAddr);
-		  printf("Device at: ");
-		  printf(i2cBuffer);
-		  printf("\r\n");
-	  }
-  }
-  printf("Done.\r\n");
+  // 20x4 LCD: 0x27, BMP280: 0x76, GY-521: 0x68, TODO: get addresses for other modules
+  UART_I2CScanDevices();
+
+  /*
+   * 	TODO: Test all sensor drivers here
+   */
+
+  GY521_DriverTest();
 
   /* Interface with the BMP280 */
-  uint8_t retval = 0;
-  retval = BMP280_Init(&hi2c1, (uint8_t)0x76);
-  static uint32_t i, j, k;
-
-  // RAW temperature and pressure values
-  int32_t UT, UP;
-
-  // Human-readable temperature and pressure
-  int32_t temperature;
-  uint32_t pressure;
-
-  while (1) {
-  		// Check status of chip
-  		i = BMP280_GetStatus();
-  		printf("Status: [%02X] %s %s\r\n",
-  				i,
-  				(i & BMP280_STATUS_MEASURING) ? "MEASURING" : "READY",
-  				(i & BMP280_STATUS_IM_UPDATE) ? "NVM_UPDATE" : "NVM_READY"
-  			);
-
-  		// Get raw readings from the chip
-  		i = BMP280_ReadUTP(&UT, &UP);
-  		printf("Raw: T=0x%05X P=0x%05X [R=%s]\r\n",
-  				UT,
-  				UP,
-  				i ? "OK" : "ERROR"
-  			);
-
-  		if (UT == 0x80000) {
-  			// Either temperature measurement is configured as 'skip' or first conversion is not completed yet
-  			printf("Temperature: no data\r\n");
-  			// There is no sense to calculate pressure without temperature readings
-  			printf("Pressure: no temperature readings\r\n");
-  		} else {
-  			// Temperature (must be calculated first)
-  			//  UT = 0x84D3C; // test raw value: 25.90C
-  			temperature = BMP280_CalcT((int32_t)0x84DC3);
-  			int t = temperature / 100.0f;
-  			printf("Temperature: %.2iC\r\n", t);
-
-  			if (UP == 0x80000) {
-  				// Either pressure measurement is configured as 'skip' or first conversion is not completed yet
-  				printf("Pressure: no data\r\n");
-  			} else {
-  				// Pressure
-  				pressure = BMP280_CalcP(UP);
-  				printf("Pressure: %.3uPa [%.3uhPa]\r\n",
-  						pressure,
-  						pressure / 100
-  					);
-
-  				printf("mmHg: %.3u\r\n",
-  						BMP280_Pa_to_mmHg(pressure)
-  					);
-
-  			}
-  		}
-
-  		printf("------------------------\r\n");
-
-  		// Invert state of the Nucleo LED
-  		//GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
-
-  		HAL_Delay(1000);
-  	}
+  BMP280_DriverTest();
 
 
   /* Display a splash screen on the LCD */
   // LCD_Init() must be called AFTER I2C and TIM1 Inits!
-  //LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
-  //LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
-  //LCD_PrintString((uint8_t*)"Hello,", 6);
-  //LCD_SetCursorPosition(0, 1);
-  //LCD_PrintString((uint8_t*)"World!", 6);
-  //HAL_Delay(5000);
-  //LCD_Command(LCD_CLEAR, LCD_PARAM_SET);	// note LCD_CLEAR sets cursor to 0,0 too
-  //LCD_PrintString((uint8_t*)"TEST", 4);
+  LCD_Init(&hi2c1, (uint8_t)0x27, 4, 20);
+  LCD_Backlight(LCD_BIT_BACKLIGHT_ON);
+  LCD_PrintString((uint8_t*)"LOADING", 7);
+  LCD_SetCursorPosition(0, 1);
+  LCD_PrintString((uint8_t*)"Please Wait", 11);
+  LCD_SetCursorPosition(0, 2);
+  LCD_PrintString((uint8_t*)"Version 1.0", 11);
+
 
   /* Get and set the RTC module */
   // Setting RTC is done following the procedure in UM1725 section 57.2
@@ -257,91 +169,7 @@ int main(void)
   __HAL_RCC_RTC_CONFIG(RCC_RTCCLKSOURCE_LSI);
   __HAL_RCC_RTC_ENABLE();
 
-  char timeString[25];
-  char dateString[25];
-  uint8_t uartBuffer[10] = {0};
-  RTC_DateTypeDef dateRTC;
-  RTC_TimeTypeDef timeRTC;
-
-  printf("Current date and time: ");
-  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
-  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
-
-  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
-  printf(timeString);
-  printf(" ");
-  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
-  printf(dateString);
-
-  printf("\r\nSet the time? (y/n)\r\n");
-  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
-
-  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y')
-  {
-	  // ask the user to set the time and date
-	  printf("Enter the time in 24hr format (HH:MM)\r\n");
-	  HAL_UART_Receive(&huart2, uartBuffer, 6, HAL_MAX_DELAY);
-
-	  char charHrs[2] = {uartBuffer[0], uartBuffer[1]};
-	  char charMins[2] = {uartBuffer[3], uartBuffer[4]};
-	  timeRTC.Hours = atoi(charHrs);
-	  timeRTC.Minutes = atoi(charMins);
-
-	  uint8_t dst = 0;
-	  printf("Daylight savings time? (y/n)\r\n");
-	  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
-
-	  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y') dst = RTC_DAYLIGHTSAVING_ADD1H;
-	  else dst = RTC_DAYLIGHTSAVING_NONE;
-
-	  // The daylight savings and store operation interfaces have been
-	  // deprecated but we will worry about that later
-	  // TODO: Update interface for RTC daylight savings time
-	  timeRTC.Seconds = 0;
-	  timeRTC.TimeFormat = RTC_HOURFORMAT12_PM;
-	  timeRTC.DayLightSaving = dst;
-	  timeRTC.StoreOperation = RTC_STOREOPERATION_RESET;
-
-	  if (HAL_RTC_SetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN) != HAL_OK)
-	  {
-		printf("INVALID TIME.\r\n");
-		Error_Handler();
-	  }
-
-	  printf("Enter the date (MM-DD-YY)\r\n");
-	  HAL_UART_Receive(&huart2, uartBuffer, 8, HAL_MAX_DELAY);
-
-	  char charMM[2] = {uartBuffer[0], uartBuffer[1]};
-	  char charDD[2] = {uartBuffer[3], uartBuffer[4]};
-	  char charYY[2] = {uartBuffer[6], uartBuffer[7]};
-	  dateRTC.Month = atoi(charMM);
-	  dateRTC.Date = atoi(charDD);
-	  dateRTC.Year = atoi(charYY);
-
-	  if (HAL_RTC_SetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN) != HAL_OK)
-	  {
-		  printf("INVALID DATE.\r\n");
-		  Error_Handler();
-	  }
-
-	  // Update the backup register too as part of setting RTC
-	  // from https://controllerstech.com/internal-rtc-in-stm32/
-	  // The hex number was chosen randomly
-	  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
-
-	  // We'll confirm the new date and time by reading it out
-	  printf("Current date and time: ");
-	  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
-	  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
-
-	  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
-	  printf(timeString);
-	  printf(" ");
-	  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
-	  printf(dateString);
-	  printf("\r\n");
-  }
-  else printf("Skipping time set.\r\n");
+  UART_UserSetRTC();
 
   /* USER CODE END 2 */
 
@@ -360,7 +188,7 @@ int main(void)
 	State_RUN = 2,
 	State_SECURE = 3
   } Controller_State;
-  Controller_State mainState;
+  Controller_State mainState = State_IDLE;
 
 
   // Main program loop
@@ -469,29 +297,6 @@ int main(void)
 		  mainState = State_IDLE;
 		  break;
 	  }
-
-	  /* This is old testing code, a sample loop
-	  // The goal for now is to transmit the now set time from the RTC, once a second.
-	  RTC_DateTypeDef getDate;
-	  RTC_TimeTypeDef getTime;
-	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
-	  HAL_RTC_GetDate(&hrtc, &getDate, RTC_FORMAT_BIN);
-	  sprintf(timeString, "%02d:%02d:%02d", getTime.Hours, getTime.Minutes, getTime.Seconds);
-	  printf(timeString);
-	  printf(" ");
-	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
-	  printf(dateString);
-	  printf("\r\n");
-
-	  // For now we just print the RTC time to the LCD
-	  //LCD_SetCursorPosition(0,2);
-	  //LCD_PrintString((uint8_t*)timeString, 8);
-	  //LCD_SetCursorPosition(0,3);
-	  //LCD_PrintString((uint8_t*)dateString, 8);
-
-	  HAL_Delay(1000);
-	  */
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -547,6 +352,232 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+ * @brief	BMP280 test driver
+ */
+void BMP280_DriverTest()
+{
+	BMP280_Init(&hi2c1, (uint8_t)0x76);
+	  static uint32_t i;
+
+	  // RAW temperature and pressure values
+	  int32_t UT, UP;
+
+	  // Human-readable temperature and pressure
+	  int32_t temperature;
+	  uint32_t pressure;
+
+	  while (1) {
+	  		// Check status of chip
+	  		i = BMP280_GetStatus();
+	  		printf("Status: [%02X] %s %s\r\n",
+	  				i,
+	  				(i & BMP280_STATUS_MEASURING) ? "MEASURING" : "READY",
+	  				(i & BMP280_STATUS_IM_UPDATE) ? "NVM_UPDATE" : "NVM_READY"
+	  			);
+
+	  		// Get raw readings from the chip
+	  		i = BMP280_ReadUTP(&UT, &UP);
+	  		printf("Raw: T=0x%05X P=0x%05X [R=%s]\r\n",
+	  				UT,
+	  				UP,
+	  				i ? "OK" : "ERROR"
+	  			);
+
+	  		if (UT == 0x80000) {
+	  			// Either temperature measurement is configured as 'skip' or first conversion is not completed yet
+	  			printf("Temperature: no data\r\n");
+	  			// There is no sense to calculate pressure without temperature readings
+	  			printf("Pressure: no temperature readings\r\n");
+	  		} else {
+	  			// Temperature (must be calculated first)
+	  			//  UT = 0x84D3C; // test raw value: 25.90C
+	  			temperature = BMP280_CalcT((int32_t)0x84DC3);
+	  			int t = temperature / 100.0f;
+	  			printf("Temperature: %.2iC\r\n", t);
+
+	  			if (UP == 0x80000) {
+	  				// Either pressure measurement is configured as 'skip' or first conversion is not completed yet
+	  				printf("Pressure: no data\r\n");
+	  			} else {
+	  				// Pressure
+	  				pressure = BMP280_CalcP(UP);
+	  				printf("Pressure: %.3uPa [%.3uhPa]\r\n",
+	  						pressure,
+	  						pressure / 100
+	  					);
+
+	  				printf("mmHg: %.3u\r\n",
+	  						BMP280_Pa_to_mmHg(pressure)
+	  					);
+
+	  			}
+	  		}
+
+	  		printf("------------------------\r\n");
+
+	  		// Invert state of the Nucleo LED
+	  		//GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
+
+	  		HAL_Delay(1000);
+	  	}
+}
+
+
+/**
+ * @brief	GY-521 test driver
+ */
+void GY521_DriverTest()
+{
+
+}
+
+/**
+ * @brief	Testing loop
+ */
+void Test_LoopTest()
+{
+	  // The goal for now is to transmit the now set time from the RTC, once a second.
+	  RTC_DateTypeDef getDate;
+	  RTC_TimeTypeDef getTime;
+	  char timeString[25];
+	  char dateString[25];
+	  HAL_RTC_GetTime(&hrtc, &getTime, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &getDate, RTC_FORMAT_BIN);
+	  sprintf(timeString, "%02d:%02d:%02d", getTime.Hours, getTime.Minutes, getTime.Seconds);
+	  printf(timeString);
+	  printf(" ");
+	  sprintf(dateString, "%02d/%02d/%02d", getDate.Month, getDate.Date, getDate.Year);
+	  printf(dateString);
+	  printf("\r\n");
+
+	  // For now we just print the RTC time to the LCD
+	  LCD_SetCursorPosition(0,2);
+	  LCD_PrintString((uint8_t*)timeString, 8);
+	  LCD_SetCursorPosition(0,3);
+	  LCD_PrintString((uint8_t*)dateString, 8);
+
+	  HAL_Delay(1000);
+}
+
+
+/**
+ * @brief	I2C scanner that prints to the serial terminal
+ */
+void UART_I2CScanDevices()
+{
+	printf("Scanning I2C bus.\r\n");
+	  int ret = 0;
+	  char i2cBuffer[5] = {0};
+	  // Scan all 128 available i2c addresses
+	  for (uint8_t testAddr = 1; testAddr < 128; testAddr++)
+	  {
+		  ret = HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(testAddr<<1), 3, 5);
+		  if (ret == HAL_OK) // If an ACK was received at address testAddr
+		  {
+			  sprintf(i2cBuffer, "0x%X", testAddr);
+			  printf("Device at: ");
+			  printf(i2cBuffer);
+			  printf("\r\n");
+		  }
+	  }
+	  printf("Done.\r\n");
+}
+
+
+/**
+ * @brief	Set the RTC time using the UART
+ */
+void UART_UserSetRTC()
+{
+	char timeString[25];
+	  char dateString[25];
+	  uint8_t uartBuffer[10] = {0};
+	  RTC_DateTypeDef dateRTC;
+	  RTC_TimeTypeDef timeRTC;
+
+	  printf("Current date and time: ");
+	  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
+	  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+
+	  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
+	  printf(timeString);
+	  printf(" ");
+	  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
+	  printf(dateString);
+
+	  printf("\r\nSet the time? (y/n)\r\n");
+	  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
+
+	  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y')
+	  {
+		  // ask the user to set the time and date
+		  printf("Enter the time in 24hr format (HH:MM)\r\n");
+		  HAL_UART_Receive(&huart2, uartBuffer, 6, HAL_MAX_DELAY);
+
+		  char charHrs[2] = {uartBuffer[0], uartBuffer[1]};
+		  char charMins[2] = {uartBuffer[3], uartBuffer[4]};
+		  timeRTC.Hours = atoi(charHrs);
+		  timeRTC.Minutes = atoi(charMins);
+
+		  uint8_t dst = 0;
+		  printf("Daylight savings time? (y/n)\r\n");
+		  HAL_UART_Receive(&huart2, uartBuffer, 2, HAL_MAX_DELAY);
+
+		  if (uartBuffer[0] == 'y' || uartBuffer[0] == 'Y') dst = RTC_DAYLIGHTSAVING_ADD1H;
+		  else dst = RTC_DAYLIGHTSAVING_NONE;
+
+		  // The daylight savings and store operation interfaces have been
+		  // deprecated but we will worry about that later
+		  // TODO: Update interface for RTC daylight savings time
+		  timeRTC.Seconds = 0;
+		  timeRTC.TimeFormat = RTC_HOURFORMAT12_PM;
+		  timeRTC.DayLightSaving = dst;
+		  timeRTC.StoreOperation = RTC_STOREOPERATION_RESET;
+
+		  if (HAL_RTC_SetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN) != HAL_OK)
+		  {
+			printf("INVALID TIME.\r\n");
+			Error_Handler();
+		  }
+
+		  printf("Enter the date (MM-DD-YY)\r\n");
+		  HAL_UART_Receive(&huart2, uartBuffer, 8, HAL_MAX_DELAY);
+
+		  char charMM[2] = {uartBuffer[0], uartBuffer[1]};
+		  char charDD[2] = {uartBuffer[3], uartBuffer[4]};
+		  char charYY[2] = {uartBuffer[6], uartBuffer[7]};
+		  dateRTC.Month = atoi(charMM);
+		  dateRTC.Date = atoi(charDD);
+		  dateRTC.Year = atoi(charYY);
+
+		  if (HAL_RTC_SetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN) != HAL_OK)
+		  {
+			  printf("INVALID DATE.\r\n");
+			  Error_Handler();
+		  }
+
+		  // Update the backup register too as part of setting RTC
+		  // from https://controllerstech.com/internal-rtc-in-stm32/
+		  // The hex number was chosen randomly
+		  HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F2);
+
+		  // We'll confirm the new date and time by reading it out
+		  printf("Current date and time: ");
+		  HAL_RTC_GetTime(&hrtc, &timeRTC, RTC_FORMAT_BIN);
+		  HAL_RTC_GetDate(&hrtc, &dateRTC, RTC_FORMAT_BIN);
+
+		  sprintf(timeString, "%02d:%02d:%02d", timeRTC.Hours, timeRTC.Minutes, timeRTC.Seconds);
+		  printf(timeString);
+		  printf(" ");
+		  sprintf(dateString, "%02d/%02d/%02d", dateRTC.Month, dateRTC.Date, dateRTC.Year);
+		  printf(dateString);
+		  printf("\r\n");
+	  }
+	  else printf("Skipping time set.\r\n");
+}
+
 
 /**
   * @brief UART 2 DMA RX complete callback
